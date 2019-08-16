@@ -1,0 +1,15 @@
+librosa==0.6.3
+inflect==2.1.0
+matplotlib==2.2.2
+falcon==1.2.0
+audioread==2.1.5
+numpy==1.14.0
+scipy==1.0.0
+tqdm==4.11.2
+Unidecode==0.4.20
+pyaudio==0.2.11
+sounddevice==0.3.10
+lws
+keras
+nltk==3.3
+jamo==0.4.1
