@@ -1,0 +1,11 @@
+__pycache__
+alignment_targets/*.npy
+alignment_target_lj/
+alignment_targets_nam/
+model_new/
+alignments_0729/
+alignments/
+alignment_targets/
+.idea
+results_kor_0730_indiv/
+img/
