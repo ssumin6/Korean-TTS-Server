@@ -1,5 +1,8 @@
 # FastSpeech-Pytorch
 The Implementation of FastSpeech Based on Pytorch.
+Addition : Korean Embedding. 
+Planning to clean up gradually.....
+
 
 ## Model
 <div align="center">
