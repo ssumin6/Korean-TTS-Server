@@ -4,7 +4,7 @@ The Implementation of FastSpeech Based on Pytorch : Korean
 
 ## Modifying....
 Planning to clean up gradually.....
-
+FastSpeech 논문을 한국어로 구현했습니다. 현재 코드 정리중입니다. 
 
 ## Start
 ### Dependencies
