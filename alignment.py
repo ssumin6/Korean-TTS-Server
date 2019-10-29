@@ -1,25 +1,3 @@
-# You need a reliable model for alignment.
-
-# ------Test------ #
-
-# For test, Multiply three there.
-
-# import torch
-# import numpy as np
-
-
-# def get_alignment(text, pos):
-#     test_out = torch.zeros(np.shape(pos)[0], np.shape(pos)[1])
-#     for i_batch in range(np.shape(pos)[0]):
-#         for i_ele in range(np.shape(pos)[1]):
-#             if pos[i_batch][i_ele] != 0:
-#                 test_out[i_batch][i_ele] = 3.0
-
-#     return test_out
-
-
-# ------Load Tacotron2------ #
-
 import matplotlib
 matplotlib.use('Agg')
 import torch
@@ -86,10 +64,6 @@ def get_tacotron2_alignment_test(text_seq):
 
     mel, mel_postnet, _, alignment = tacotron2.inference(sequence)
 
-   # plot_data((mel.float().data.cpu().numpy()[0],
-   #            mel_postnet.float().data.cpu().numpy()[0],
-   #            alignment.float().data.cpu().numpy()[0].T))
-
     wav = audio.inv_mel_spectrogram(mel_postnet.float().data.cpu().numpy()[0])
     file_name = text_seq.replace(" ", "_")
 
@@ -148,33 +122,14 @@ def process_text(train_text_path):
                         break
 
         return txt
-
+ 
 if __name__ == "__main__":
-    #tacotron2 = get_tacotron2()
-    text2 = "사람들은 그를 게으른 천재라고 부른다."
-    get_tacotron2_alignment_test(text2)
-    #text_seq2 = text_to_sequence(text2, ['korean_cleaners'])
-    #print(text_seq2)
-    #text_seq2 = torch.from_numpy(np.array(text_seq2)[None, :])
-    #alignment2 = get_one_alignment(text_seq2, tacotron2)
-    #print(alignment2.shape)
-    print("Wav Have Been Synthesized.")
-
-    if not os.path.exists("results"):
-        os.mkdir("results")
-    # audio.save_wav(wav, os.path.join("results", text_seq2 + ".wav"))
-
-if __name__ == "__next__":
     # Test
-    #alignment = get_tacotron2_alignment_test(
-    #    "I want to go to CMU to do research on deep learning.")
-    #print(alignment)
 
     tacotron2 = get_tacotron2()
 
     text_path = os.path.join('dataset/nam', "train.txt")
     text = process_text(text_path)
-    #print(text[0])
     
     i = 0
     for i in range(len(text)):
