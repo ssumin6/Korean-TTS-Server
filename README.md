@@ -6,6 +6,7 @@ This is based on the fastspeech implementation of [xcmyz](https://github.com/xcm
 Planning to clean up gradually.....
 FastSpeech 논문을 한국어로 구현했습니다. 현재 코드 정리중입니다. 
 
+
 ## Start
 ### Dependencies
 - python 3.6
@@ -21,6 +22,7 @@ FastSpeech 논문을 한국어로 구현했습니다. 현재 코드 정리중입
 1. Download and extract [LJSpeech dataset](https://keithito.com/LJ-Speech-Dataset/).
 2. Put LJSpeech dataset in `data`.
 3. Run `preprocess.py`.
+Our team used the Speech dataset in Korean. 
 
 ### Get Alignment from Tacotron2
 #### Note
