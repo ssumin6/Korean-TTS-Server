@@ -19,7 +19,6 @@ use_lws = False
 import tensorflow as tf
 hparams = tf.contrib.training.HParams(
         text_cleaners = ['korean_cleaners'])
-        #text_cleaners = ['english_cleaners'])
 
 # Model
 word_vec_dim = 384
