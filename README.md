@@ -1,6 +1,6 @@
 # FastSpeech-Pytorch
 The Implementation of FastSpeech Based on Pytorch : Korean
-
+This is based on the fastspeech implementation of [xcmyz](https://github.com/xcmyz/FastSpeech).
 
 ## Modifying....
 Planning to clean up gradually.....
@@ -91,5 +91,5 @@ duration_predictor_output = duration_predictor_output - 1
 - [The Implementation of Transformer Based on Pytorch](https://github.com/jadore801120/attention-is-all-you-need-pytorch)
 - [The Implementation of Transformer-TTS Based on Pytorch](https://github.com/xcmyz/Transformer-TTS)
 - [The Implementation of Tacotron2 Based on Pytorch](https://github.com/NVIDIA/tacotron2)
-- Implementation of Korean Embedding(https://github.com/Yeongtae/tacotron2)
-- Original Implementation of FastSpeech(https://github.com/xcmyz/FastSpeech)
+- [Implementation of Korean Embedding](https://github.com/Yeongtae/tacotron2)
+- [Original Implementation of FastSpeech](https://github.com/xcmyz/FastSpeech)
