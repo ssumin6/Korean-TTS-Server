@@ -47,7 +47,6 @@ def synthesis_griffin_lim(text_seq, model, alpha=1.0, mode="", num = 100):
     pos = torch.stack([torch.Tensor([i+1 for i in range(text.size(1))])])
     pos = pos.long().to(device)
 
-    #start = timeit.default_timer()
     start = int(round(time.time() * 1000))
 
     model.eval()
@@ -97,7 +96,6 @@ def help():
     print("help usage")
     print("-t : text (korean)")
     print("-s : step_num")
-    print("-u : upload / true - upload to gs bucket")
     return
 
 
@@ -106,7 +104,7 @@ if __name__ == "__main__":
     
     upload = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "t:s:u:h", ["text=", "step=","upload=", "help"])
+        opts, args = getopt.getopt(sys.argv[1:], "t:s:h", ["text=", "step=", "help"])
     except getopt.GetoptError as err:
         print(str(err))
         help()
@@ -118,13 +116,9 @@ if __name__ == "__main__":
         if (opt == "-s"):
             step_num = int(arg)
             print(step_num)
-        if (opt == "-u"):
-            if arg == 1:
-                upload = True
 
 
     model = nn.DataParallel(FastSpeech()).to(device)
-    #step_num = 134500
     checkpoint = torch.load(os.path.join(
         hp.checkpoint_path, 'checkpoint_%d.pth.tar' % step_num))
     model.load_state_dict(checkpoint['model'])
@@ -133,17 +127,9 @@ if __name__ == "__main__":
     print("Model Have Been Loaded.\n")
     
     start_time = timeit.default_timer()
-    #words = "만나서 반가워."
     file_name = synthesis_griffin_lim(words, model, alpha=1.0, mode="normal",num = step_num)
-    #synthesis_griffin_lim(words, model, alpha=1.5, mode="slow")
-    #synthesis_griffin_lim(words, model, alpha=0.5, mode="quick")
     end_time = timeit.default_timer()
     time = end_time - start_time
-    #print("Synthesized.")
-    #waveglow = get_waveglow()
-    #synthesis_waveglow(words, model, waveglow,
-     #                  alpha=1.0, mode="waveglow_normal")
-    #print("Synthesized by Waveglow.")
 
     save_name = words.replace(" ", "_")
  
