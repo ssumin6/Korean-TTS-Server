@@ -49,7 +49,7 @@ Run `train_accelerated.py`.
 
 ## Test
 ### Synthesize
-Run `synthesis.py`.
+Run `test.py -t text_sentence -s checkpoint_step -w 1'
 
 ### Results
 - The examples of audio are in `results`. The sentence for synthesizing is "I am very happy to see you again.". `results/normal.wav` was synthesized when `alpha = 1.0`, `results/slow.wav` was synthesized when `alpha = 1.5` and `results/quick.wav` was synthesized when `alpha = 0.5`.
@@ -70,12 +70,6 @@ The total_loss curve recorded from 30000th step to 140000th step is shown as fol
 </div>
 
 ## Notes
-- If you want to use another model to get alignments, you need rewrite `alignment.py`.
-- The returned value of `alignment.py` is a tensor whose value is the multiple that encoder's outputs are supposed to be expanded by. For example: 
-```python
-test_target = torch.stack([torch.Tensor([0, 2, 3, 0, 3, 2, 1, 0, 0, 0]),
-                           torch.Tensor([1, 2, 3, 2, 2, 0, 3, 6, 3, 5])])
-```
 - The output of LengthRegulator's last linear layer passes through the ReLU activation function in order to remove negative values. It is the outputs of this module. During the inference, the output of LengthRegulator pass through `torch.exp()` and subtract one, as the multiple for expanding encoder output. During the training stage, duration targets add one and pass through `torch.log()` and then calculate loss. For example:
 ```python
 duration_predictor_target = duration_predictor_target + 1
