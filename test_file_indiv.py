@@ -101,7 +101,6 @@ def help():
     print("help usage")
     print("-t : text (korean)")
     print("-s : step_num")
-    print("-u : upload / true - upload to gs bucket")
     return
 
 
@@ -111,7 +110,7 @@ if __name__ == "__main__":
     upload = False
     
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "t:s:u:h", ["text=", "step=","upload=", "help"])
+        opts, args = getopt.getopt(sys.argv[1:], "t:s:h", ["text=", "step=", "help"])
     except getopt.GetoptError as err:
         print(str(err))
         help()
@@ -122,13 +121,8 @@ if __name__ == "__main__":
             words = str(arg)
         if (opt == "-s"):
             step_num = int(arg)
-        if (opt == "-u"):
-            tmp = int(arg)
-            if tmp == 1:
-                upload = True
 
     model = nn.DataParallel(FastSpeech()).to(device)
-    #step_num = 134500
     checkpoint = torch.load(os.path.join(
         hp.checkpoint_path, 'checkpoint_%d.pth.tar' %step_num))
     model.load_state_dict(checkpoint['model'])
@@ -136,19 +130,5 @@ if __name__ == "__main__":
         model = model.module
     print("Model Have Been Loaded.\n")
 
-    #words = "만나서 반가워."
     file_name = synthesis_griffin_lim(words, model, alpha=1.0, mode="normal",num = step_num)
-    #synthesis_griffin_lim(words, model, alpha=1.5, mode="slow")
-    #synthesis_griffin_lim(words, model, alpha=0.5, mode="quick")
-    # print("Synthesized.\n")
-
-    #waveglow = get_waveglow()
-    #synthesis_waveglow(words, model, waveglow,
-     #                  alpha=1.0, mode="waveglow_normal")
-    #print("Synthesized by Waveglow.")
-    if upload:
-        save_name = words.replace(" ", "_")
-        file_name = file_name  + str(step_num) +"normal"+ "." + "wav"
-        os.system("gsutil cp results/%s gs://nm-voice-intern/result_v100_eng" %file_name)
-
 
