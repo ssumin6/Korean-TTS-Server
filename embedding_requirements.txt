@@ -11,5 +11,5 @@ pyaudio==0.2.11
 sounddevice==0.3.10
 lws
 keras
-nltk==3.3
+nltk==3.4.5
 jamo==0.4.1
