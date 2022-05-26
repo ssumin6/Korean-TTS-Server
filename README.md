@@ -6,7 +6,22 @@ This is based on the fastspeech implementation of [xcmyz](https://github.com/xcm
 \Add screen Capture 
 
 ## Performance on Korean TTS dataset
-\Add Performance on
+We tested our trained model on various aspect : Inference Time, Accuracy in Pronounciation and Robustness. 
+
+### CER (Character Error Rate)
+Accurancy in pronounciation is evaluated in CER (Character Error Rate). It compares the original sentence and generated sentence via passing a generated audio into Google Speech recognition API.
+
+### Robustness 
+Created a set of 100 hard sentences and count the number of sentences that repetition and skipping occurs. \
+100 Sentences are created from tongue-twisting sentences in Korean. 
+
+|  | Tacotron2 (Baseline) | FastSpeech |
+|--|--|--|
+| Robustness (# of Skipping) | 34 | **28** |
+| Robustness (# of Repeat) | 18 | **3** |
+| Inference Time (s) | 2.16 | **0.02**  |
+| CER on Test Dataset (%) | **17.8** | 19.3 |
+| CER on Game Test Dataset (%) | **28.9** | 57.2 |
 
 ### Dependencies
 - python 3.6
