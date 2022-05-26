@@ -50,21 +50,7 @@ Run `test.py -t text_sentence -s checkpoint_step -w 1'
 
 ### Results
 - The examples of audio are in `results`. The sentence for synthesizing is "I am very happy to see you again.". `results/normal.wav` was synthesized when `alpha = 1.0`, `results/slow.wav` was synthesized when `alpha = 1.5` and `results/quick.wav` was synthesized when `alpha = 0.5`.
-- The outputs and alignment of Tacotron2 are shown as follows (The sentence for synthesizing is "I want to go to CMU to do research on deep learning."):
-<div align="center">
-<img src="img/tacotron2_outputs.jpg">
-</div>
 
-- The outputs and alignment of FastSpeech are shown as follows (The sentence for synthesizing is "I want to go to CMU to do research on deep learning."):
-<div align="center">
-<img src="img/model_test.jpg">
-</div>
-
-### Loss Curve
-The total_loss curve recorded from 30000th step to 140000th step is shown as follows:
-<div align="center">
-<img src="img/loss_one.jpg">
-</div>
 
 ## Notes
 - The output of LengthRegulator's last linear layer passes through the ReLU activation function in order to remove negative values. It is the outputs of this module. During the inference, the output of LengthRegulator pass through `torch.exp()` and subtract one, as the multiple for expanding encoder output. During the training stage, duration targets add one and pass through `torch.log()` and then calculate loss. For example:
