@@ -3,7 +3,7 @@ Implementation of Korean TTS Server based on FastSpeech Pytorch. \
 This is based on the fastspeech implementation of [xcmyz](https://github.com/xcmyz/FastSpeech).
 
 ## Screen Capture of Web Demo
-\Add screen Capture 
+![Screen Capture of Web Demo](imgs/web.png)
 
 ## Performance on Korean TTS dataset
 We tested our trained model on various aspect : Inference Time, Accuracy in Pronounciation and Robustness. 
@@ -22,6 +22,8 @@ Created a set of 100 hard sentences and count the number of sentences that repet
 | Inference Time (s) | 2.16 | **0.02**  |
 | CER on Test Dataset (%) | **17.8** | 19.3 |
 | CER on Game Test Dataset (%) | **28.9** | 57.2 |
+
+## Start
 
 ### Dependencies
 - python 3.6
