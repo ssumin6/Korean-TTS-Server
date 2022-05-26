@@ -1,8 +1,13 @@
-# FastSpeech-Pytorch
-The Implementation of FastSpeech Based on Pytorch : Korean
+# Korean TTS Server
+Implementation of Korean TTS Server based on FastSpeech Pytorch. \
 This is based on the fastspeech implementation of [xcmyz](https://github.com/xcmyz/FastSpeech).
 
-## Start
+## Screen Capture of Web Demo
+\Add screen Capture 
+
+## Performance on Korean TTS dataset
+\Add Performance on
+
 ### Dependencies
 - python 3.6
 - CUDA 10.0
@@ -16,8 +21,8 @@ This is based on the fastspeech implementation of [xcmyz](https://github.com/xcm
 ### Prepare Dataset
 1. Download and extract [LJSpeech dataset](https://keithito.com/LJ-Speech-Dataset/).
 2. Put LJSpeech dataset in `data`.
-3. Run `preprocess.py`.
-Our team used the Speech dataset in Korean. 
+3. Run `preprocess.py`. 
+> For this implementation, our team utilize Korean Dataset which is available only in Netmarble Company. 
 
 ### Get Alignment from Tacotron2
 #### Note
@@ -50,7 +55,6 @@ Run `test.py -t text_sentence -s checkpoint_step -w 1'
 
 ### Results
 - The examples of audio are in `results`. The sentence for synthesizing is "I am very happy to see you again.". `results/normal.wav` was synthesized when `alpha = 1.0`, `results/slow.wav` was synthesized when `alpha = 1.5` and `results/quick.wav` was synthesized when `alpha = 0.5`.
-
 
 ## Notes
 - The output of LengthRegulator's last linear layer passes through the ReLU activation function in order to remove negative values. It is the outputs of this module. During the inference, the output of LengthRegulator pass through `torch.exp()` and subtract one, as the multiple for expanding encoder output. During the training stage, duration targets add one and pass through `torch.log()` and then calculate loss. For example:
