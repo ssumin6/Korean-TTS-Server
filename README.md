@@ -2,11 +2,6 @@
 The Implementation of FastSpeech Based on Pytorch : Korean
 This is based on the fastspeech implementation of [xcmyz](https://github.com/xcmyz/FastSpeech).
 
-## Modifying....
-Planning to clean up gradually.....
-FastSpeech 논문을 한국어로 구현했습니다. 현재 코드 정리중입니다. 
-
-
 ## Start
 ### Dependencies
 - python 3.6
