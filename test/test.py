@@ -1,35 +1,30 @@
 import matplotlib
 matplotlib.use('Agg')
-import torch
-import getopt
-import torch.nn as nn
-import numpy as np
-import matplotlib.pylab as plt
 import os
 import sys
-
 import audio
-from FastSpeech import FastSpeech
+import torch
+import getopt
+
+import numpy as np
 import hparams as hp
-from text.text import text_to_sequence
+import torch.nn as nn
+import matplotlib.pylab as plt
 
 from WER import WERCER
-
+from FastSpeech import FastSpeech
+from text.text import text_to_sequence
 from inference import mels_to_wavs_GL, generate_mels
 
-os.environ['GOOGLE_APPLICATION-CREDITIALS'] = "magellan-voice-ui-86932243453a.json"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
-def plot_data(data, figsize=(12, 4), file_name = ""):
-    _, axes = plt.subplots(1, len(data), figsize=figsize)
-    for i in range(len(data)):
-        axes[i].imshow(data[i] , aspect = 'auto',
+def plot_mel_spectrogram(mels, fig_size=(12, 4), file_name = ""):
+    _, axes = plt.subplots(1, len(mels), fig_size=figsize)
+    for i in range(len(mels)):
+        axes[i].imshow(mels[i] , aspect = 'auto',
                        origin='bottom', interpolation='none')
-    #plt.plot(data[0], aspect='auto', origin='bottom', interpolation = 'none')
     file_name = file_name.replace(" ", "_")
     plt.savefig(os.path.join("img", "%s.jpg" % file_name))
-
 
     os.system("gsutil cp img/%s.jpg gs://nm-voice-intern/results_kor_0730_indiv/plot_img/" %file_name)
 
@@ -42,107 +37,98 @@ def get_waveglow():
 
     return waveglow
 
+def synthesis_griffin_lim(sentence, tts_model, alpha=1.0, mode="", ckpt_step = 100, useMetric = True, isHighPitchInput = False):
+    text_seq = text_to_sequence(sentence, hp.hparams.text_cleaners)
+    text_seq = text_seq + [0]
+    text_seq = np.stack([np.array(text_seq)])
+    text_seq = torch.from_numpy(text_seq).cuda().to(device)
 
-def synthesis_griffin_lim(text_seq, model, alpha=1.0, mode="", num = 100, check = True, cute = False):
-    text = text_to_sequence(text_seq, hp.hparams.text_cleaners)
-    text = text + [0]
-    text = np.stack([np.array(text)])
-    text = torch.from_numpy(text).cuda().to(device)
+    position_seq = torch.stack([torch.Tensor([i+1 for i in range(text_seq.size(1))])])
+    position_seq = position_seq.long().to(device)
 
-    pos = torch.stack([torch.Tensor([i+1 for i in range(text.size(1))])])
-    pos = pos.long().to(device)
-
-    model.eval()
-
-    #mel = generate_mels(model, text, pos, 1, 0)
+    tts_model.eval()
 
     with torch.no_grad():
-        mel, mel_postnet = model(text, pos, alpha=alpha)
+        mel, mel_postnet = tts_model(text_seq, position_seq, alpha=alpha)
 
-    if not os.path.exists("results_kor_0730_indiv"):
-        os.mkdir("results_kor_0730_indiv")
-    new_name = text_seq.replace(" ","_")
-    new_name = new_name.replace("?","_")
-    if (cute):
-        new_name2 = new_name+"_cute"
-    new_name2 = new_name + str(num) + ".wav"
-    new_name3 = "results_kor_0730_indiv/" + new_name2
+    generated_audio_dir = "results_kor_0730_indiv"
+    if not os.path.exists(generated_audio_dir):
+        os.mkdir(generated_audio_dir)
+        
+    snake_case_name = text_seq.replace(" ","_")
+    snake_case_name = snake_case_name.replace("?","_")
+    if (isHighPitchInput):
+        snake_case_name = snake_case_name + "_high_pitch"
+    file_name = snake_case_name + str(ckpt_step) + ".wav"
+    file_path = os.path.join(generated_audio_dir, file_name)
 
-    if (cute):
-        #high-pitched sound 
+    if (isHighPitchInput):
         mel_postnet = mel_postnet[0].cpu().numpy().T
     else:
-        #print('mel', mel.max(), mel.mean(), mel.min())
-        #print('mel.shape' , mel_postnet.shape)
         mel_postnet = mel_postnet.data.cpu().numpy()[0].T
         mel_postnet = mel_postnet[:, :-1]
         mel_postnet = np.append(mel_postnet, np.ones((80, 0), dtype=np.float32)*-4.0, axis=1)
-        #print(mel.shape)
 
     mel = mel[0].cpu().numpy().T
-    #print('mel_postnet', mel_postnet.max(), mel_postnet.mean(), mel_postnet.min())
-    plot_data([mel, mel_postnet], file_name = new_name)
-    mels = []
-    mels.append(mel_postnet)
+    plot_mel_spectrogram([mel, mel_postnet], file_name = snake_case_name)
 
-    if (cute):
+    if (isHighPitchInput):
         wav = audio.inv_mel_spectrogram(mel_postnet)
     else:
         stft = audio.taco_stft()
-        wav = mels_to_wavs_GL(mels, stft)
+        wav = mels_to_wavs_GL([mel_postnet], stft)
 
-
-    audio.save_wav(wav, os.path.join("results_kor_0730_indiv", new_name + str(num) + ".wav"))
-    clean_text = new_name.replace("_", " ")
-
-    if check:
-        x, _, _, y, _, _ = WERCER([new_name3], [str(clean_text)])
+    audio.save_wav(wav, os.path.join(generated_audio_dir, snake_case_name + str(ckpt_step) + ".wav"))
+    
+    if useMetric:
+        clean_text = snake_case_name.replace("_", " ")
+        wer, _, _, cer, _, _ = WERCER([file_path], [str(clean_text)])
     else:
-        x = 0
-        y = 0
+        wer, cer = 0, 0
 
-    return new_name, x, y 
+    return snake_case_name, wer, cer
 
-def synthesis_waveglow(text_seq, model, waveglow, alpha=1.0, mode=""):
-    text = text_to_sequence(text_seq, hp.hparams.text_cleaners)
-    text = text + [0]
-    text = np.stack([np.array(text)])
-    text = torch.from_numpy(text).long().to(device)
+def synthesis_waveglow(sentence, tts_model, waveglow, alpha=1.0, mode=""):
+    text_seq = text_to_sequence(sentence, hp.hparams.text_cleaners)
+    text_seq = text_seq + [0]
+    text_seq = np.stack([np.array(text_seq)])
+    text_seq = torch.from_numpy(text_seq).long().to(device)
 
-    pos = torch.stack([torch.Tensor([i+1 for i in range(text.size(1))])])
-    pos = pos.long().to(device)
+    position_seq = torch.stack([torch.Tensor([i+1 for i in range(text_seq.size(1))])])
+    position_seq = position_seq.long().to(device)
 
-    model.eval()
+    tts_model.eval()
     with torch.no_grad():
-        _, mel_postnet = model(text, pos, alpha=alpha)
+        _, mel_postnet = tts_model(text_seq, position_seq, alpha=alpha)
+
     with torch.no_grad():
         wav = waveglow.infer(mel_postnet, sigma=0.666)
     print("Wav Have Been Synthesized.")
 
-    if not os.path.exists("results"):
-        os.mkdir("results")
-    audio.save_wav(wav[0].data.cpu().numpy(), os.path.join(
-        "results", text_seq + mode + ".wav"))
+    generated_audio_dir = "results"
+    if not os.path.exists(generated_audio_dir):
+        os.mkdir(generated_audio_dir)
+    audio.save_wav(wav[0].data.cpu().numpy(), os.path.join(generated_audio_dir, text_seq + mode + ".wav"))
 
 def help():
     print("help usage")
     print("-t : text (korean)")
-    print("-s : step_num")
+    print("-s : ckpt_step")
     print("-u : upload / true - upload to gs bucket")
     print("-w : check wer and cer")
     print("-c : create high_pitched_sound")
     return
 
-
 if __name__ == "__main__":
     # Test
-
-    upload = False
-    check = False
-    cute = False
+    copyToDrive = False
+    useMetric = False
+    isHighPitchInput = False
     
+    argExist = 1
+
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "t:s:u:w:h:c", ["text=", "step=","upload=","wer=", "help","cute"])
+        opts, args = getopt.getopt(sys.argv[1:], "t:s:u:w:h:c", ["text=", "step=", "upload=", "wer=", "help", "cute"])
     except getopt.GetoptError as err:
         print(str(err))
         help()
@@ -150,57 +136,34 @@ if __name__ == "__main__":
 
     for opt, arg in opts:
         if (opt == "-t"):
-            words = str(arg)
+            sentence = str(arg)
         if (opt == "-s"):
-            step_num = int(arg)
+            ckpt_step = int(arg)
         if (opt == "-u"):
-            tmp = int(arg)
-            if tmp == 1:
-                upload = True
+            if int(arg) == argExist:
+                copyToDrive = True
         if (opt == "-w"):
-            tmp = int(arg)
-            if tmp == 1:
-                check = True
+            if int(arg) == argExist:
+                useMetric = True
         if (opt == "-c"):
-            cute = True
+            isHighPitchInput = True
 
-
-    model = nn.DataParallel(FastSpeech()).to(device)
-    #step_num = 134500
+    fastspeech_model = nn.DataParallel(FastSpeech()).to(device)
     checkpoint = torch.load(os.path.join(
-        hp.checkpoint_path, 'checkpoint_%d.pth.tar' % step_num))
-    model.load_state_dict(checkpoint['model'])
+        hp.checkpoint_path, 'checkpoint_%d.pth.tar' % ckpt_step))
+    fastspeech_model.load_state_dict(checkpoint['model'])
     if (torch.cuda.device_count()>1):
-        model = model.module
-    print("Model Have Been Loaded.\n")
+        fastspeech_model = fastspeech_model.module
+    print("FastSpeech Model Have Been Loaded.\n")
+    
+    file_name, wer, cer = synthesis_griffin_lim(sentence, fastspeech_model, alpha=1.0, mode="normal", ckpt_step = ckpt_step, useMetric = useMetric, isHighPitchInput=isHighPitchInput)
 
-    wer = 0
-    cer = 0
-    i = 0
-
-
-    #words = "만나서 반가워."
-    file_name, wer, cer = synthesis_griffin_lim(words, model, alpha=1.0, mode="normal",num = step_num, check = check, cute=cute)
-
-    if check:
+    if useMetric:
         print("#######################################")
         print("Total Result of WER and CER")
         print("WER : ", wer)
         print("CER : ", cer)
 
-    #synthesis_griffin_lim(words, model, alpha=1.5, mode="slow")
-    #synthesis_griffin_lim(words, model, alpha=0.5, mode="quick")
-
-    #waveglow = get_waveglow()
-    #synthesis_waveglow(words, model, waveglow,
-     #                  alpha=1.0, mode="waveglow_normal")
-    #print("Synthesized by Waveglow.")
-
-
-    if upload:
-        save_name = words.replace(" ", "_")
-        file_name = file_name  + str(step_num) + "." + "wav"
+    if copyToDrive:
+        file_name = file_name + str(ckpt_step) + "." + "wav"
         os.system("gsutil cp results_kor_0730_indiv/%s gs://nm-voice-intern/results_kor_0730_indiv/" %file_name)
-        
-
-
