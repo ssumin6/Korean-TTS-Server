@@ -4,7 +4,7 @@ matplotlib==2.2.2
 falcon==1.2.0
 audioread==2.1.5
 numpy==1.14.0
-scipy==1.0.0
+scipy==1.10.0
 tqdm==4.11.2
 Unidecode==0.4.20
 pyaudio==0.2.11
