@@ -2,6 +2,7 @@ from torch import nn
 
 
 class Tacotron2Loss(nn.Module):
+
     def __init__(self):
         super(Tacotron2Loss, self).__init__()
 

@@ -7,9 +7,9 @@ through Unidecode. For other data, you can modify _characters. See TRAINING_DATA
 from . import cmudict
 from .korean import ALL_SYMBOLS_1
 
-_pad        = '_'
-_eos        = '~'
-_special    = '-'
+_pad = '_'
+_eos = '~'
+_special = '-'
 _punctuation = '!\'(),.:;? '
 _characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 
@@ -17,5 +17,7 @@ _characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 _arpabet = ['@' + s for s in cmudict.valid_symbols]
 
 # Export all symbols:
-eng_symbols = [_pad] + list(_special)+ list(_punctuation)+ list(_characters)+ _arpabet
+eng_symbols = [
+    _pad
+] + list(_special) + list(_punctuation) + list(_characters) + _arpabet
 kor_symbols = ALL_SYMBOLS_1

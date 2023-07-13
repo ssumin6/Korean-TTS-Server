@@ -10,7 +10,8 @@ def cut_arr(arr):
     return arr
 
 
-def visualize(total_loss_file_name, mel_loss_file_name, mel_postnet_loss_file_name):
+def visualize(total_loss_file_name, mel_loss_file_name,
+              mel_postnet_loss_file_name):
     plt.figure()
 
     total_loss_arr = np.array(list())

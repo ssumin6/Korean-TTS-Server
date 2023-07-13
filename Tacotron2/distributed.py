@@ -3,6 +3,7 @@ import torch.distributed as dist
 from torch.nn.modules import Module
 from torch.autograd import Variable
 
+
 def _flatten_dense_tensors(tensors):
     """Flatten dense tensors into a contiguous 1D buffer. Assume tensors are of
     same dense type.
@@ -18,6 +19,7 @@ def _flatten_dense_tensors(tensors):
         return tensors[0].contiguous().view(-1)
     flat = torch.cat([t.contiguous().view(-1) for t in tensors], dim=0)
     return flat
+
 
 def _unflatten_dense_tensors(flat, tensors):
     """View a flat buffer using the sizes of tensors. Assume that tensors are of
@@ -48,6 +50,8 @@ used to set the device.
 Parameters are broadcasted to the other processes on initialization of DistributedDataParallel,
 and will be allreduced at the finish of the backward pass.
 '''
+
+
 class DistributedDataParallel(Module):
 
     def __init__(self, module):
@@ -66,7 +70,7 @@ class DistributedDataParallel(Module):
             dist.broadcast(p, 0)
 
         def allreduce_params():
-            if(self.needs_reduction):
+            if (self.needs_reduction):
                 self.needs_reduction = False
                 buckets = {}
                 for param in self.module.parameters():
@@ -77,9 +81,11 @@ class DistributedDataParallel(Module):
                         buckets[tp].append(param)
                 if self.warn_on_half:
                     if torch.cuda.HalfTensor in buckets:
-                        print("WARNING: gloo dist backend for half parameters may be extremely slow." +
-                              " It is recommended to use the NCCL backend in this case. This currently requires" +
-                              "PyTorch built from top of tree master.")
+                        print(
+                            "WARNING: gloo dist backend for half parameters may be extremely slow."
+                            +
+                            " It is recommended to use the NCCL backend in this case. This currently requires"
+                            + "PyTorch built from top of tree master.")
                         self.warn_on_half = False
 
                 for tp in buckets:
@@ -88,12 +94,15 @@ class DistributedDataParallel(Module):
                     coalesced = _flatten_dense_tensors(grads)
                     dist.all_reduce(coalesced)
                     coalesced /= dist.get_world_size()
-                    for buf, synced in zip(grads, _unflatten_dense_tensors(coalesced, grads)):
+                    for buf, synced in zip(
+                            grads, _unflatten_dense_tensors(coalesced, grads)):
                         buf.copy_(synced)
 
         for param in list(self.module.parameters()):
+
             def allreduce_hook(*unused):
                 param._execution_engine.queue_callback(allreduce_params)
+
             if param.requires_grad:
                 param.register_hook(allreduce_hook)
 
@@ -119,55 +128,64 @@ class DistributedDataParallel(Module):
         super(DistributedDataParallel, self).train(mode)
         self.module.train(mode)
     '''
+
+
 '''
 Modifies existing model to do gradient allreduce, but doesn't change class
 so you don't need "module"
 '''
+
+
 def apply_gradient_allreduce(module):
-        if not hasattr(dist, '_backend'):
-            module.warn_on_half = True
-        else:
-            module.warn_on_half = True if dist._backend == dist.dist_backend.GLOO else False
+    if not hasattr(dist, '_backend'):
+        module.warn_on_half = True
+    else:
+        module.warn_on_half = True if dist._backend == dist.dist_backend.GLOO else False
 
-        for p in module.state_dict().values():
-            if not torch.is_tensor(p):
-                continue
-            dist.broadcast(p, 0)
+    for p in module.state_dict().values():
+        if not torch.is_tensor(p):
+            continue
+        dist.broadcast(p, 0)
 
-        def allreduce_params():
-            if(module.needs_reduction):
-                module.needs_reduction = False
-                buckets = {}
-                for param in module.parameters():
-                    if param.requires_grad and param.grad is not None:
-                        tp = param.data.dtype
-                        if tp not in buckets:
-                            buckets[tp] = []
-                        buckets[tp].append(param)
-                if module.warn_on_half:
-                    if torch.cuda.HalfTensor in buckets:
-                        print("WARNING: gloo dist backend for half parameters may be extremely slow." +
-                              " It is recommended to use the NCCL backend in this case. This currently requires" +
-                              "PyTorch built from top of tree master.")
-                        module.warn_on_half = False
+    def allreduce_params():
+        if (module.needs_reduction):
+            module.needs_reduction = False
+            buckets = {}
+            for param in module.parameters():
+                if param.requires_grad and param.grad is not None:
+                    tp = param.data.dtype
+                    if tp not in buckets:
+                        buckets[tp] = []
+                    buckets[tp].append(param)
+            if module.warn_on_half:
+                if torch.cuda.HalfTensor in buckets:
+                    print(
+                        "WARNING: gloo dist backend for half parameters may be extremely slow."
+                        +
+                        " It is recommended to use the NCCL backend in this case. This currently requires"
+                        + "PyTorch built from top of tree master.")
+                    module.warn_on_half = False
 
-                for tp in buckets:
-                    bucket = buckets[tp]
-                    grads = [param.grad.data for param in bucket]
-                    coalesced = _flatten_dense_tensors(grads)
-                    dist.all_reduce(coalesced)
-                    coalesced /= dist.get_world_size()
-                    for buf, synced in zip(grads, _unflatten_dense_tensors(coalesced, grads)):
-                        buf.copy_(synced)
+            for tp in buckets:
+                bucket = buckets[tp]
+                grads = [param.grad.data for param in bucket]
+                coalesced = _flatten_dense_tensors(grads)
+                dist.all_reduce(coalesced)
+                coalesced /= dist.get_world_size()
+                for buf, synced in zip(
+                        grads, _unflatten_dense_tensors(coalesced, grads)):
+                    buf.copy_(synced)
 
-        for param in list(module.parameters()):
-            def allreduce_hook(*unused):
-                Variable._execution_engine.queue_callback(allreduce_params)
-            if param.requires_grad:
-                param.register_hook(allreduce_hook)
+    for param in list(module.parameters()):
 
-        def set_needs_reduction(self, input, output):
-            self.needs_reduction = True
+        def allreduce_hook(*unused):
+            Variable._execution_engine.queue_callback(allreduce_params)
 
-        module.register_forward_hook(set_needs_reduction)
-        return module
+        if param.requires_grad:
+            param.register_hook(allreduce_hook)
+
+    def set_needs_reduction(self, input, output):
+        self.needs_reduction = True
+
+    module.register_forward_hook(set_needs_reduction)
+    return module

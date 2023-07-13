@@ -9,20 +9,21 @@ from FastSpeech import FastSpeech
 import hparams as hp
 from text.text import text_to_sequence
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def plot_data(data, figsize=(12, 4)):
     _, axes = plt.subplots(1, len(data), figsize=figsize)
     for i in range(len(data)):
-        axes[i].imshow(data[i], aspect='auto',
-                       origin='bottom', interpolation='none')
+        axes[i].imshow(
+            data[i], aspect="auto", origin="bottom", interpolation="none"
+        )
     plt.savefig(os.path.join("img", "model_test.jpg"))
 
 
 def get_waveglow():
-    waveglow_path = os.path.join(hp.waveglow_path, 'waveglow_256channels.pt')
-    waveglow = torch.load(waveglow_path)['model']
+    waveglow_path = os.path.join(hp.waveglow_path, "waveglow_256channels.pt")
+    waveglow = torch.load(waveglow_path)["model"]
     waveglow.cuda().eval().half()
     for k in waveglow.convinv:
         k.float()
@@ -36,7 +37,7 @@ def synthesis_griffin_lim(text_seq, model, alpha=1.0, mode=""):
     text = np.stack([np.array(text)])
     text = torch.from_numpy(text).long().to(device)
 
-    pos = torch.stack([torch.Tensor([i+1 for i in range(text.size(1))])])
+    pos = torch.stack([torch.Tensor([i + 1 for i in range(text.size(1))])])
     pos = pos.long().to(device)
 
     model.eval()
@@ -61,7 +62,7 @@ def synthesis_waveglow(text_seq, model, waveglow, alpha=1.0, mode=""):
     text = np.stack([np.array(text)])
     text = torch.from_numpy(text).long().to(device)
 
-    pos = torch.stack([torch.Tensor([i+1 for i in range(text.size(1))])])
+    pos = torch.stack([torch.Tensor([i + 1 for i in range(text.size(1))])])
     pos = pos.long().to(device)
 
     model.eval()
@@ -73,20 +74,23 @@ def synthesis_waveglow(text_seq, model, waveglow, alpha=1.0, mode=""):
 
     if not os.path.exists("results"):
         os.mkdir("results")
-    audio.save_wav(wav[0].data.cpu().numpy(), os.path.join(
-        "results", text_seq + mode + ".wav"))
+    audio.save_wav(
+        wav[0].data.cpu().numpy(),
+        os.path.join("results", text_seq + mode + ".wav"),
+    )
 
 
 if __name__ == "__main__":
     # Test
     model = nn.DataParallel(FastSpeech()).to(device)
     step_num = 1000
-    checkpoint = torch.load(os.path.join(
-        hp.checkpoint_path, 'checkpoint_10.pth.tar'))
-   # checkpoint = torch.load(os.path.join(
-   #     hp.checkpoint_path, 'checkpoint_%d.pth.tar' % step_num))
-    model.load_state_dict(checkpoint['model'])
-    if (torch.cuda.device_count()>1):
+    checkpoint = torch.load(
+        os.path.join(hp.checkpoint_path, "checkpoint_10.pth.tar")
+    )
+    # checkpoint = torch.load(os.path.join(
+    #     hp.checkpoint_path, 'checkpoint_%d.pth.tar' % step_num))
+    model.load_state_dict(checkpoint["model"])
+    if torch.cuda.device_count() > 1:
         model = model.module
     print("Model Have Been Loaded.")
 

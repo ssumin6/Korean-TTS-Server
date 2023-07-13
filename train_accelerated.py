@@ -9,7 +9,12 @@ import time
 
 from FastSpeech import FastSpeech
 from loss import FastSpeechLoss
-from data_utils_accelerated import FastSpeechDataset, collate_fn, DataLoader, data_prefetcher
+from data_utils_accelerated import (
+    FastSpeechDataset,
+    collate_fn,
+    DataLoader,
+    data_prefetcher,
+)
 from optimizer import ScheduledOptim
 from alignment import get_alignment, get_tacotron2
 import hparams as hp
@@ -17,42 +22,47 @@ import hparams as hp
 
 def main(args):
     # Get device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Define model
     model = nn.DataParallel(FastSpeech()).to(device)
     tacotron2 = get_tacotron2()
     print("FastSpeech and Tacotron2 Have Been Defined")
     num_param = sum(param.numel() for param in model.parameters())
-    print('Number of FastSpeech Parameters:', num_param)
+    print("Number of FastSpeech Parameters:", num_param)
 
     # Get dataset
     dataset = FastSpeechDataset()
 
     # Optimizer and loss
     optimizer = torch.optim.Adam(
-        model.parameters(), betas=(0.9, 0.98), eps=1e-9)
-    scheduled_optim = ScheduledOptim(optimizer,
-                                     hp.word_vec_dim,
-                                     hp.n_warm_up_step,
-                                     args.restore_step)
+        model.parameters(), betas=(0.9, 0.98), eps=1e-9
+    )
+    scheduled_optim = ScheduledOptim(
+        optimizer, hp.word_vec_dim, hp.n_warm_up_step, args.restore_step
+    )
     fastspeech_loss = FastSpeechLoss().to(device)
     print("Defined Optimizer and Loss Function.")
 
     # Get training loader and Pre-Fetcher
     print("Get Training Loader")
-    training_loader = DataLoader(dataset,
-                                 batch_size=hp.batch_size,
-                                 shuffle=True,
-                                 collate_fn=collate_fn,
-                                 drop_last=True,
-                                 num_workers=cpu_count())
+    training_loader = DataLoader(
+        dataset,
+        batch_size=hp.batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
+        drop_last=True,
+        num_workers=cpu_count(),
+    )
 
     try:
-        checkpoint = torch.load(os.path.join(
-            hp.checkpoint_path, 'checkpoint_%d.pth.tar' % args.restore_step))
-        model.load_state_dict(checkpoint['model'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
+        checkpoint = torch.load(
+            os.path.join(
+                hp.checkpoint_path, "checkpoint_%d.pth.tar" % args.restore_step
+            )
+        )
+        model.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
         print("\n------Model Restored at Step %d------\n" % args.restore_step)
 
     except:
@@ -79,8 +89,9 @@ def main(args):
         while data_of_batch[0] is not None:
             i = i + 1
             start_time = time.clock()
-            current_step = i + args.restore_step + \
-                epoch * len(training_loader) + 1
+            current_step = (
+                i + args.restore_step + epoch * len(training_loader) + 1
+            )
 
             # Init
             scheduled_optim.zero_grad()
@@ -90,8 +101,9 @@ def main(args):
                 src_seq = data_of_batch[0]
                 src_pos = data_of_batch[1]
                 mel_tgt = data_of_batch[2]
-                alignment_target = get_alignment(
-                    src_seq, tacotron2).float().to(device)
+                alignment_target = (
+                    get_alignment(src_seq, tacotron2).float().to(device)
+                )
                 # For Data Parallel
                 mel_max_len = mel_tgt.size(1)
             else:
@@ -105,13 +117,24 @@ def main(args):
 
             # Forward
             mel_output, mel_output_postnet, duration_predictor_output = model(
-                src_seq, src_pos,
+                src_seq,
+                src_pos,
                 mel_max_length=mel_max_len,
-                length_target=alignment_target)
+                length_target=alignment_target,
+            )
 
             # Cal Loss
-            mel_loss, mel_postnet_loss, duration_predictor_loss = fastspeech_loss(
-                mel_output, mel_output_postnet, duration_predictor_output, mel_tgt, alignment_target)
+            (
+                mel_loss,
+                mel_postnet_loss,
+                duration_predictor_loss,
+            ) = fastspeech_loss(
+                mel_output,
+                mel_output_postnet,
+                duration_predictor_output,
+                mel_tgt,
+                alignment_target,
+            )
             total_loss = mel_loss + mel_postnet_loss + duration_predictor_loss
 
             # Logger
@@ -120,17 +143,25 @@ def main(args):
             m_p_l = mel_postnet_loss.item()
             d_p_l = duration_predictor_loss.item()
 
-            with open(os.path.join("logger", "total_loss.txt"), "a") as f_total_loss:
-                f_total_loss.write(str(t_l)+"\n")
+            with open(
+                os.path.join("logger", "total_loss.txt"), "a"
+            ) as f_total_loss:
+                f_total_loss.write(str(t_l) + "\n")
 
-            with open(os.path.join("logger", "mel_loss.txt"), "a") as f_mel_loss:
-                f_mel_loss.write(str(m_l)+"\n")
+            with open(
+                os.path.join("logger", "mel_loss.txt"), "a"
+            ) as f_mel_loss:
+                f_mel_loss.write(str(m_l) + "\n")
 
-            with open(os.path.join("logger", "mel_postnet_loss.txt"), "a") as f_mel_postnet_loss:
-                f_mel_postnet_loss.write(str(m_p_l)+"\n")
+            with open(
+                os.path.join("logger", "mel_postnet_loss.txt"), "a"
+            ) as f_mel_postnet_loss:
+                f_mel_postnet_loss.write(str(m_p_l) + "\n")
 
-            with open(os.path.join("logger", "duration_predictor_loss.txt"), "a") as f_d_p_loss:
-                f_d_p_loss.write(str(d_p_l)+"\n")
+            with open(
+                os.path.join("logger", "duration_predictor_loss.txt"), "a"
+            ) as f_d_p_loss:
+                f_d_p_loss.write(str(d_p_l) + "\n")
 
             # Backward
             total_loss.backward()
@@ -141,7 +172,8 @@ def main(args):
             # Update weights
             if args.frozen_learning_rate:
                 scheduled_optim.step_and_update_lr_frozen(
-                    args.learning_rate_frozen)
+                    args.learning_rate_frozen
+                )
             else:
                 scheduled_optim.step_and_update_lr()
 
@@ -150,20 +182,31 @@ def main(args):
                 Now = time.clock()
 
                 str1 = "Epoch [{}/{}], Step [{}/{}], Mel Loss: {:.4f}, Mel PostNet Loss: {:.4f};".format(
-                    epoch+1, hp.epochs, current_step, total_step, mel_loss.item(), mel_postnet_loss.item())
+                    epoch + 1,
+                    hp.epochs,
+                    current_step,
+                    total_step,
+                    mel_loss.item(),
+                    mel_postnet_loss.item(),
+                )
                 str2 = "Duration Predictor Loss: {:.4f}, Total Loss: {:.4f}.".format(
-                    duration_predictor_loss.item(), total_loss.item())
+                    duration_predictor_loss.item(), total_loss.item()
+                )
                 str3 = "Current Learning Rate is {:.6f}.".format(
-                    scheduled_optim.get_learning_rate())
+                    scheduled_optim.get_learning_rate()
+                )
                 str4 = "Time Used: {:.3f}s, Estimated Time Remaining: {:.3f}s.".format(
-                    (Now-Start), (total_step-current_step)*np.mean(Time))
+                    (Now - Start), (total_step - current_step) * np.mean(Time)
+                )
 
                 print("\n" + str1)
                 print(str2)
                 print(str3)
                 print(str4)
 
-                with open(os.path.join("logger", "logger.txt"), "a") as f_logger:
+                with open(
+                    os.path.join("logger", "logger.txt"), "a"
+                ) as f_logger:
                     f_logger.write(str1 + "\n")
                     f_logger.write(str2 + "\n")
                     f_logger.write(str3 + "\n")
@@ -171,8 +214,16 @@ def main(args):
                     f_logger.write("\n")
 
             if current_step % hp.save_step == 0:
-                torch.save({'model': model.state_dict(), 'optimizer': optimizer.state_dict(
-                )}, os.path.join(hp.checkpoint_path, 'checkpoint_%d.pth.tar' % current_step))
+                torch.save(
+                    {
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                    },
+                    os.path.join(
+                        hp.checkpoint_path,
+                        "checkpoint_%d.pth.tar" % current_step,
+                    ),
+                )
                 print("save model at step %d ..." % current_step)
 
             end_time = time.clock()
@@ -180,7 +231,8 @@ def main(args):
             if len(Time) == hp.clear_Time:
                 temp_value = np.mean(Time)
                 Time = np.delete(
-                    Time, [i for i in range(len(Time))], axis=None)
+                    Time, [i for i in range(len(Time))], axis=None
+                )
                 Time = np.append(Time, temp_value)
 
             data_of_batch = prefetcher.next()
@@ -189,8 +241,8 @@ def main(args):
 if __name__ == "__main__":
     # Main
     parser = argparse.ArgumentParser()
-    parser.add_argument('--restore_step', type=int, default=0)
-    parser.add_argument('--frozen_learning_rate', type=bool, default=False)
+    parser.add_argument("--restore_step", type=int, default=0)
+    parser.add_argument("--frozen_learning_rate", type=bool, default=False)
     parser.add_argument("--learning_rate_frozen", type=float, default=1e-3)
     args = parser.parse_args()
 

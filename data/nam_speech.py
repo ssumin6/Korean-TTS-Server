@@ -28,15 +28,18 @@ def build_from_path(in_dir, out_dir, num_workers=16, tqdm=lambda x: x):
 
     stft = audio.taco_stft()
 
-    with open(os.path.join(in_dir, 'nam-h_train_filelist.txt'), encoding='utf-8') as f:
+    with open(os.path.join(in_dir, 'nam-h_train_filelist.txt'),
+              encoding='utf-8') as f:
         for line in f:
             parts = line.strip().split('|')
             wav_path = os.path.join(in_dir, '%s' % parts[0])
             parts2 = line.strip().split('.')
-            out_path = os.path.join(out_dir,"%s" %parts2[0]+"mel.npy")
+            out_path = os.path.join(out_dir, "%s" % parts2[0] + "mel.npy")
             text = parts[1]
-            futures.append(executor.submit(
-                partial(_process_utterance, out_dir, out_path, wav_path, text, stft)))
+            futures.append(
+                executor.submit(
+                    partial(_process_utterance, out_dir, out_path, wav_path,
+                            text, stft)))
 
             if index % 100 == 0:
                 print("Done %d" % index)
@@ -63,29 +66,33 @@ def _process_utterance(out_dir, out_path, wav_path, text, stft):
 
     # Load the audio to a numpy array:
     wav = audio.load_wav(wav_path)
-    wav = wav/np.abs(wav).max()*0.999
+    wav = wav / np.abs(wav).max() * 0.999
     #stft = audio.taco_stft()
 
-    # delete the silence in back of the audio file. 
-    wav = librosa.effects.trim(wav, top_db=23, frame_length=1024, hop_length=256)[0]
+    # delete the silence in back of the audio file.
+    wav = librosa.effects.trim(wav,
+                               top_db=23,
+                               frame_length=1024,
+                               hop_length=256)[0]
 
     # Compute the linear-scale spectrogram from the wav:
     spectrogram = audio.spectrogram(wav).astype(np.float32)
     n_frames = spectrogram.shape[1]
 
     # Compute a mel-scale spectrogram from the wav:
-    mel_spectrogram = audio.melspectrogram(wav,stft).numpy().astype(np.float32)
+    mel_spectrogram = audio.melspectrogram(wav,
+                                           stft).numpy().astype(np.float32)
 
     # Write the spectrograms to disk:
     # spectrogram_filename = 'ljspeech-spec-%05d.npy' % index
     parts = out_path.strip().split('/')
-    mel_filename = parts[4]+parts[5]+parts[6];
-    o_path = os.path.join(parts[0],parts[1],parts[4])
+    mel_filename = parts[4] + parts[5] + parts[6]
+    o_path = os.path.join(parts[0], parts[1], parts[4])
 
-#    print(o_path)
-#    mel_filename = 'nam_speech-mel-%05d.npy' % index
-  #  print(out_path)    
-    
+    #    print(o_path)
+    #    mel_filename = 'nam_speech-mel-%05d.npy' % index
+    #  print(out_path)
+
     if (not os.path.exists(o_path)):
         os.mkdir(o_path)
     o_path = os.path.join(o_path, parts[5])
@@ -93,8 +100,7 @@ def _process_utterance(out_dir, out_path, wav_path, text, stft):
         os.mkdir(o_path)
     o_path = os.path.join(o_path, parts[6])
 
-    np.save(o_path,
-            mel_spectrogram.T, allow_pickle=False)
+    np.save(o_path, mel_spectrogram.T, allow_pickle=False)
 
     # Return a tuple describing this training example:
     # return (spectrogram_filename, mel_filename, n_frames, text)

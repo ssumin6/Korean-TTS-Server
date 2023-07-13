@@ -4,8 +4,15 @@ from scipy.signal import get_window
 import librosa.util as librosa_util
 
 
-def window_sumsquare(window, n_frames, hop_length=200, win_length=800,
-                     n_fft=800, dtype=np.float32, norm=None):
+def window_sumsquare(
+    window,
+    n_frames,
+    hop_length=200,
+    win_length=800,
+    n_fft=800,
+    dtype=np.float32,
+    norm=None,
+):
     """
     # from librosa 0.6
     Compute the sum-square envelope of a window function at a given hop length.
@@ -46,13 +53,15 @@ def window_sumsquare(window, n_frames, hop_length=200, win_length=800,
 
     # Compute the squared window at the desired length
     win_sq = get_window(window, win_length, fftbins=True)
-    win_sq = librosa_util.normalize(win_sq, norm=norm)**2
+    win_sq = librosa_util.normalize(win_sq, norm=norm) ** 2
     win_sq = librosa_util.pad_center(win_sq, n_fft)
 
     # Fill the envelope
     for i in range(n_frames):
         sample = i * hop_length
-        x[sample:min(n, sample + n_fft)] += win_sq[:max(0, min(n_fft, n - sample))]
+        x[sample : min(n, sample + n_fft)] += win_sq[
+            : max(0, min(n_fft, n - sample))
+        ]
     return x
 
 
@@ -74,12 +83,21 @@ def griffin_lim(magnitudes, stft_fn, n_iters=30):
         signal = stft_fn.inverse(magnitudes, angles).squeeze(1)
     return signal
 
+
 def mel_normalize(x, max_abs_value=4.0, min_level_db=-100):
-    return torch.clamp((2*max_abs_value)*(x - min_level_db)/(-min_level_db) - max_abs_value,
-                       min=-max_abs_value, max = max_abs_value)
+    return torch.clamp(
+        (2 * max_abs_value) * (x - min_level_db) / (-min_level_db)
+        - max_abs_value,
+        min=-max_abs_value,
+        max=max_abs_value,
+    )
+
 
 def mel_denormalize(x, max_abs_value=4.0, min_level_db=-100):
-    return (torch.clamp(x, min=-max_abs_value, max = max_abs_value) + max_abs_value)*(-min_level_db)/(2*max_abs_value) + min_level_db
+    return (
+        torch.clamp(x, min=-max_abs_value, max=max_abs_value) + max_abs_value
+    ) * (-min_level_db) / (2 * max_abs_value) + min_level_db
+
 
 def dynamic_range_compression(x, C=20, clip_val=1e-5):
     """
@@ -96,4 +114,4 @@ def dynamic_range_decompression(x, C=20):
     ------
     C: compression factor used to compress
     """
-    return torch.pow(10, x/C)
+    return torch.pow(10, x / C)

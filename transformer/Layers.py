@@ -21,9 +21,8 @@ class Linear(nn.Module):
         super(Linear, self).__init__()
         self.linear_layer = nn.Linear(in_dim, out_dim, bias=bias)
 
-        nn.init.xavier_uniform_(
-            self.linear_layer.weight,
-            gain=nn.init.calculate_gain(w_init))
+        nn.init.xavier_uniform_(self.linear_layer.weight,
+                                gain=nn.init.calculate_gain(w_init))
 
     def forward(self, x):
         return self.linear_layer(x)
@@ -44,14 +43,15 @@ class PreNet(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
         self.hidden_size = hidden_size
-        self.layer = nn.Sequential(OrderedDict([
-            ('fc1', Linear(self.input_size, self.hidden_size)),
-            ('relu1', nn.ReLU()),
-            ('dropout1', nn.Dropout(p)),
-            ('fc2', Linear(self.hidden_size, self.output_size)),
-            ('relu2', nn.ReLU()),
-            ('dropout2', nn.Dropout(p)),
-        ]))
+        self.layer = nn.Sequential(
+            OrderedDict([
+                ('fc1', Linear(self.input_size, self.hidden_size)),
+                ('relu1', nn.ReLU()),
+                ('dropout1', nn.Dropout(p)),
+                ('fc2', Linear(self.hidden_size, self.output_size)),
+                ('relu2', nn.ReLU()),
+                ('dropout2', nn.Dropout(p)),
+            ]))
 
     def forward(self, input_):
 
@@ -94,8 +94,8 @@ class Conv(nn.Module):
                               dilation=dilation,
                               bias=bias)
 
-        nn.init.xavier_uniform_(
-            self.conv.weight, gain=nn.init.calculate_gain(w_init))
+        nn.init.xavier_uniform_(self.conv.weight,
+                                gain=nn.init.calculate_gain(w_init))
 
     def forward(self, x):
         x = self.conv(x)
@@ -105,22 +105,22 @@ class Conv(nn.Module):
 class FFTBlock(torch.nn.Module):
     """FFT Block"""
 
-    def __init__(self,
-                 d_model,
-                 d_inner,
-                 n_head,
-                 d_k,
-                 d_v,
-                 dropout=0.1):
+    def __init__(self, d_model, d_inner, n_head, d_k, d_v, dropout=0.1):
         super(FFTBlock, self).__init__()
-        self.slf_attn = MultiHeadAttention(
-            n_head, d_model, d_k, d_v, dropout=dropout)
-        self.pos_ffn = PositionwiseFeedForward(
-            d_model, d_inner, dropout=dropout)
+        self.slf_attn = MultiHeadAttention(n_head,
+                                           d_model,
+                                           d_k,
+                                           d_v,
+                                           dropout=dropout)
+        self.pos_ffn = PositionwiseFeedForward(d_model,
+                                               d_inner,
+                                               dropout=dropout)
 
     def forward(self, enc_input, non_pad_mask=None, slf_attn_mask=None):
-        enc_output, enc_slf_attn = self.slf_attn(
-            enc_input, enc_input, enc_input, mask=slf_attn_mask)
+        enc_output, enc_slf_attn = self.slf_attn(enc_input,
+                                                 enc_input,
+                                                 enc_input,
+                                                 mask=slf_attn_mask)
         enc_output *= non_pad_mask
 
         enc_output = self.pos_ffn(enc_output)
@@ -130,6 +130,7 @@ class FFTBlock(torch.nn.Module):
 
 
 class ConvNorm(torch.nn.Module):
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -142,7 +143,7 @@ class ConvNorm(torch.nn.Module):
         super(ConvNorm, self).__init__()
 
         if padding is None:
-            assert(kernel_size % 2 == 1)
+            assert (kernel_size % 2 == 1)
             padding = int(dilation * (kernel_size - 1) / 2)
 
         self.conv = torch.nn.Conv1d(in_channels,
@@ -185,9 +186,7 @@ class PostNet(nn.Module):
                          padding=int((postnet_kernel_size - 1) / 2),
                          dilation=1,
                          w_init_gain='tanh'),
-
-                nn.BatchNorm1d(postnet_embedding_dim))
-        )
+                nn.BatchNorm1d(postnet_embedding_dim)))
 
         for i in range(1, postnet_n_convolutions - 1):
             self.convolutions.append(
@@ -199,9 +198,7 @@ class PostNet(nn.Module):
                              padding=int((postnet_kernel_size - 1) / 2),
                              dilation=1,
                              w_init_gain='tanh'),
-
-                    nn.BatchNorm1d(postnet_embedding_dim))
-            )
+                    nn.BatchNorm1d(postnet_embedding_dim)))
 
         self.convolutions.append(
             nn.Sequential(
@@ -212,16 +209,14 @@ class PostNet(nn.Module):
                          padding=int((postnet_kernel_size - 1) / 2),
                          dilation=1,
                          w_init_gain='linear'),
-
-                nn.BatchNorm1d(n_mel_channels))
-        )
+                nn.BatchNorm1d(n_mel_channels)))
 
     def forward(self, x):
         x = x.contiguous().transpose(1, 2)
 
         for i in range(len(self.convolutions) - 1):
-            x = F.dropout(torch.tanh(
-                self.convolutions[i](x)), 0.5, self.training)
+            x = F.dropout(torch.tanh(self.convolutions[i](x)), 0.5,
+                          self.training)
         x = F.dropout(self.convolutions[-1](x), 0.5, self.training)
 
         x = x.contiguous().transpose(1, 2)

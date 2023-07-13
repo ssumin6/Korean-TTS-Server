@@ -11,20 +11,23 @@ def preprocess_ljspeech(filename):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
     metadata = nam_speech.build_from_path(
-        in_dir, out_dir, cpu_count(), tqdm=tqdm)
+        in_dir, out_dir, cpu_count(), tqdm=tqdm
+    )
     write_metadata(metadata, out_dir)
 
 
 def write_metadata(metadata, out_dir):
-    with open(os.path.join(out_dir, 'train.txt'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(out_dir, "train.txt"), "w", encoding="utf-8") as f:
         for m in metadata:
-            f.write('|'.join([str(x) for x in m]) + '\n')
+            f.write("|".join([str(x) for x in m]) + "\n")
     frames = sum([m[1] for m in metadata])
     hours = frames * hparams.frame_shift_ms / (3600 * 1000)
-    print('Wrote %d utterances, %d frames (%.2f hours)' %
-          (len(metadata), frames, hours))
-    print('Max input length:  %d' % max(len(m[2]) for m in metadata))
-    print('Max output length: %d' % max(m[1] for m in metadata))
+    print(
+        "Wrote %d utterances, %d frames (%.2f hours)"
+        % (len(metadata), frames, hours)
+    )
+    print("Max input length:  %d" % max(len(m[2]) for m in metadata))
+    print("Max output length: %d" % max(m[1] for m in metadata))
 
 
 def main():

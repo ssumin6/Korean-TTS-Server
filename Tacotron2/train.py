@@ -16,6 +16,7 @@ from Tacotron2.hparams import create_hparams
 from Tacotron2.loss_function import Tacotron2Loss
 from Tacotron2.data_utils import TextMelLoader, TextMelCollate
 
+
 def reduce_tensor(tensor, n_gpus):
     rt = tensor.clone()
     dist.all_reduce(rt, op=dist.reduce_op.SUM)
@@ -31,9 +32,11 @@ def init_distributed(hparams, n_gpus, rank, group_name):
     torch.cuda.set_device(rank % torch.cuda.device_count())
 
     # Initialize distributed communication
-    dist.init_process_group(
-        backend=hparams.dist_backend, init_method=hparams.dist_url,
-        world_size=n_gpus, rank=rank, group_name=group_name)
+    dist.init_process_group(backend=hparams.dist_backend,
+                            init_method=hparams.dist_url,
+                            world_size=n_gpus,
+                            rank=rank,
+                            group_name=group_name)
 
     print("Done initializing distributed")
 
@@ -48,37 +51,40 @@ def load_model(hparams):
 
     return model
 
+
 def prepare_dataloaders(hparams):
-        # Get data, data loaders and collate function ready
-        trainset = TextMelLoader(hparams.training_files, hparams)
-        valset = TextMelLoader(hparams.validation_files, hparams)
-        collate_fn = TextMelCollate(hparams.n_frames_per_step)
+    # Get data, data loaders and collate function ready
+    trainset = TextMelLoader(hparams.training_files, hparams)
+    valset = TextMelLoader(hparams.validation_files, hparams)
+    collate_fn = TextMelCollate(hparams.n_frames_per_step)
 
-        if hparams.distributed_run:
-            train_sampler = DistributedSampler(trainset)
-            shuffle = False
-        else:
-            train_sampler = None
-            shuffle = True
+    if hparams.distributed_run:
+        train_sampler = DistributedSampler(trainset)
+        shuffle = False
+    else:
+        train_sampler = None
+        shuffle = True
 
-        train_loader = DataLoader(trainset, num_workers=1, shuffle=shuffle,
-                                sampler=train_sampler,
-                                batch_size=hparams.batch_size, pin_memory=False,
-                                drop_last=True, collate_fn=collate_fn)
-        return train_loader, valset, collate_fn
+    train_loader = DataLoader(trainset,
+                              num_workers=1,
+                              shuffle=shuffle,
+                              sampler=train_sampler,
+                              batch_size=hparams.batch_size,
+                              pin_memory=False,
+                              drop_last=True,
+                              collate_fn=collate_fn)
+    return train_loader, valset, collate_fn
 
 
 def prepare_directories_and_logger(output_directory, log_directory, rank):
-        if rank == 0:
-            if not os.path.isdir(output_directory):
-                os.makedirs(output_directory)
-                os.chmod(output_directory, 0o775)
-            logger = Tacotron2Logger(os.path.join(output_directory, log_directory))
-        else:
-            logger = None
-        return logger
-                                                                        
-
+    if rank == 0:
+        if not os.path.isdir(output_directory):
+            os.makedirs(output_directory)
+            os.chmod(output_directory, 0o775)
+        logger = Tacotron2Logger(os.path.join(output_directory, log_directory))
+    else:
+        logger = None
+    return logger
 
 
 def warm_start_model(checkpoint_path, model, ignore_layers):
@@ -87,8 +93,10 @@ def warm_start_model(checkpoint_path, model, ignore_layers):
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     model_dict = checkpoint_dict['state_dict']
     if len(ignore_layers) > 0:
-        model_dict = {k: v for k, v in model_dict.items()
-                      if k not in ignore_layers}
+        model_dict = {
+            k: v
+            for k, v in model_dict.items() if k not in ignore_layers
+        }
         dummy_dict = model.state_dict()
         dummy_dict.update(model_dict)
         model_dict = dummy_dict
@@ -104,7 +112,7 @@ def load_checkpoint(checkpoint_path, model, optimizer):
     optimizer.load_state_dict(checkpoint_dict['optimizer'])
     learning_rate = checkpoint_dict['learning_rate']
     iteration = checkpoint_dict['iteration']
-    print("Loaded checkpoint '{}' from iteration {}" .format(
+    print("Loaded checkpoint '{}' from iteration {}".format(
         checkpoint_path, iteration))
     return model, optimizer, learning_rate, iteration
 
@@ -112,10 +120,13 @@ def load_checkpoint(checkpoint_path, model, optimizer):
 def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
     print("Saving model and optimizer state at iteration {} to {}".format(
         iteration, filepath))
-    torch.save({'iteration': iteration,
-                'state_dict': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'learning_rate': learning_rate}, filepath)
+    torch.save(
+        {
+            'iteration': iteration,
+            'state_dict': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'learning_rate': learning_rate
+        }, filepath)
 
 
 def validate(model, criterion, valset, iteration, batch_size, n_gpus,
@@ -124,9 +135,13 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
     model.eval()
     with torch.no_grad():
         val_sampler = DistributedSampler(valset) if distributed_run else None
-        val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
-                                shuffle=False, batch_size=batch_size,
-                                pin_memory=False, collate_fn=collate_fn)
+        val_loader = DataLoader(valset,
+                                sampler=val_sampler,
+                                num_workers=1,
+                                shuffle=False,
+                                batch_size=batch_size,
+                                pin_memory=False,
+                                collate_fn=collate_fn)
 
         val_loss = 0.0
         for i, batch in enumerate(val_loader):
@@ -142,8 +157,10 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
 
     model.train()
     if rank == 0:
-        print("Validation loss {}: {:9f}  ".format(iteration, reduced_val_loss))
+        print("Validation loss {}: {:9f}  ".format(iteration,
+                                                   reduced_val_loss))
         #logger.log_validation(reduced_val_loss, model, y, y_pred, iteration)
+
 
 def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
           rank, group_name, hparams):
@@ -165,21 +182,21 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
     model = load_model(hparams)
     learning_rate = hparams.learning_rate
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
+    optimizer = torch.optim.Adam(model.parameters(),
+                                 lr=learning_rate,
                                  weight_decay=hparams.weight_decay)
 
     if hparams.fp16_run:
         from apex import amp
-        model, optimizer = amp.initialize(
-            model, optimizer, opt_level='O2')
+        model, optimizer = amp.initialize(model, optimizer, opt_level='O2')
 
     if hparams.distributed_run:
         model = apply_gradient_allreduce(model)
 
     criterion = Tacotron2Loss()
 
-    logger = prepare_directories_and_logger(
-        output_directory, log_directory, rank)
+    logger = prepare_directories_and_logger(output_directory, log_directory,
+                                            rank)
 
     train_loader, valset, collate_fn = prepare_dataloaders(hparams)
 
@@ -188,8 +205,8 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
     epoch_offset = 0
     if checkpoint_path is not None:
         if warm_start:
-            model = warm_start_model(
-                checkpoint_path, model, hparams.ignore_layers)
+            model = warm_start_model(checkpoint_path, model,
+                                     hparams.ignore_layers)
         else:
             model, optimizer, _learning_rate, iteration = load_checkpoint(
                 checkpoint_path, model, optimizer)
@@ -235,12 +252,14 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             if not is_overflow and rank == 0:
                 duration = time.perf_counter() - start
-                print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(
-                    iteration, reduced_loss, grad_norm, duration))
-                logger.log_training(
-                    reduced_loss, grad_norm, learning_rate, duration, iteration)
+                print(
+                    "Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(
+                        iteration, reduced_loss, grad_norm, duration))
+                logger.log_training(reduced_loss, grad_norm, learning_rate,
+                                    duration, iteration)
 
-            if not is_overflow and (iteration % hparams.iters_per_checkpoint == 0):
+            if not is_overflow and (iteration % hparams.iters_per_checkpoint
+                                    == 0):
                 validate(model, criterion, valset, iteration,
                          hparams.batch_size, n_gpus, collate_fn, logger,
                          hparams.distributed_run, rank)
@@ -255,22 +274,43 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output_directory', type=str,
+    parser.add_argument('-o',
+                        '--output_directory',
+                        type=str,
                         help='directory to save checkpoints')
-    parser.add_argument('-l', '--log_directory', type=str,
+    parser.add_argument('-l',
+                        '--log_directory',
+                        type=str,
                         help='directory to save tensorboard logs')
-    parser.add_argument('-c', '--checkpoint_path', type=str, default=None,
-                        required=False, help='checkpoint path')
-    parser.add_argument('--warm_start', action='store_true',
-                        help='load model weights only, ignore specified layers')
-    parser.add_argument('--n_gpus', type=int, default=1,
-                        required=False, help='number of gpus')
-    parser.add_argument('--rank', type=int, default=0,
-                        required=False, help='rank of current gpu')
-    parser.add_argument('--group_name', type=str, default='group_name',
-                        required=False, help='Distributed group name')
-    parser.add_argument('--hparams', type=str,
-                        required=False, help='comma separated name=value pairs')
+    parser.add_argument('-c',
+                        '--checkpoint_path',
+                        type=str,
+                        default=None,
+                        required=False,
+                        help='checkpoint path')
+    parser.add_argument(
+        '--warm_start',
+        action='store_true',
+        help='load model weights only, ignore specified layers')
+    parser.add_argument('--n_gpus',
+                        type=int,
+                        default=1,
+                        required=False,
+                        help='number of gpus')
+    parser.add_argument('--rank',
+                        type=int,
+                        default=0,
+                        required=False,
+                        help='rank of current gpu')
+    parser.add_argument('--group_name',
+                        type=str,
+                        default='group_name',
+                        required=False,
+                        help='Distributed group name')
+    parser.add_argument('--hparams',
+                        type=str,
+                        required=False,
+                        help='comma separated name=value pairs')
 
     args = parser.parse_args()
     hparams = create_hparams()

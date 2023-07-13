@@ -31,8 +31,10 @@ def build_from_path(in_dir, out_dir, num_workers=16, tqdm=lambda x: x):
             parts = line.strip().split('|')
             wav_path = os.path.join(in_dir, 'wavs', '%s.wav' % parts[0])
             text = parts[2]
-            futures.append(executor.submit(
-                partial(_process_utterance, out_dir, index, wav_path, text)))
+            futures.append(
+                executor.submit(
+                    partial(_process_utterance, out_dir, index, wav_path,
+                            text)))
 
             if index % 100 == 0:
                 print("Done %d" % index)
@@ -59,24 +61,26 @@ def _process_utterance(out_dir, index, wav_path, text):
 
     # Load the audio to a numpy array:
     wav = audio.load_wav(wav_path)
-    wav = wav/np.abs(wav).max()*0.999
+    wav = wav / np.abs(wav).max() * 0.999
     #######################################################################
     stft = audio.taco_stft()
     ########################################################################
-    
+
     # Compute the linear-scale spectrogram from the wav:
     spectrogram = audio.spectrogram(wav).astype(np.float32)
 
     n_frames = spectrogram.shape[1]
 
     # Compute a mel-scale spectrogram from the wav:
-    mel_spectrogram = audio.melspectrogram(wav,stft).numpy().astype(np.float32)
+    mel_spectrogram = audio.melspectrogram(wav,
+                                           stft).numpy().astype(np.float32)
 
     # Write the spectrograms to disk:
     # spectrogram_filename = 'ljspeech-spec-%05d.npy' % index
     mel_filename = 'ljspeech-mel-%05d.npy' % index
     np.save(os.path.join(out_dir, mel_filename),
-            mel_spectrogram.T, allow_pickle=False)
+            mel_spectrogram.T,
+            allow_pickle=False)
 
     # Return a tuple describing this training example:
     # return (spectrogram_filename, mel_filename, n_frames, text)

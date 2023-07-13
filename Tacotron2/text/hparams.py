@@ -1,5 +1,6 @@
 from text.symbols import kor_symbols
 
+
 class Hparams:
     """ hyper parameters """
 

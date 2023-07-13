@@ -1,5 +1,6 @@
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import torch
 import numpy as np
 import matplotlib.pylab as plt
@@ -12,13 +13,13 @@ import audio
 import hparams as hp
 
 
-
 def get_tacotron2():
     hparams = hp_tacotron2.create_hparams()
     hparams.sampling_rate = hp.sample_rate
 
-    checkpoint_path = os.path.join("Tacotron2", os.path.join(
-        "pre_trained_model", "checkpoint_51000"))
+    checkpoint_path = os.path.join(
+        "Tacotron2", os.path.join("pre_trained_model", "checkpoint_51000")
+    )
 
     tacotron2 = train_tacotron2.load_model(hparams)
     tacotron2.load_state_dict(torch.load(checkpoint_path)["state_dict"])
@@ -30,8 +31,9 @@ def get_tacotron2():
 def plot_data(data, figsize=(16, 4)):
     _, axes = plt.subplots(1, len(data), figsize=figsize)
     for i in range(len(data)):
-        axes[i].imshow(data[i], aspect='auto',
-                       origin='bottom', interpolation='none')
+        axes[i].imshow(
+            data[i], aspect="auto", origin="bottom", interpolation="none"
+        )
     plt.savefig(os.path.join("img", "test_tacotron2.jpg"))
 
 
@@ -49,25 +51,29 @@ def get_tacotron2_alignment_test(text_seq):
     hparams = hp_tacotron2.create_hparams()
     hparams.sampling_rate = hp.sample_rate
 
-    checkpoint_path = os.path.join("Tacotron2", os.path.join(
-        "outdir", "checkpoint_51000"))
+    checkpoint_path = os.path.join(
+        "Tacotron2", os.path.join("outdir", "checkpoint_51000")
+    )
 
     tacotron2 = train_tacotron2.load_model(hparams)
     tacotron2.load_state_dict(torch.load(checkpoint_path)["state_dict"])
     _ = tacotron2.cuda().eval().half()
 
-    sequence = np.array(text_to_sequence(text_seq, hp.hparams.text_cleaners))[None, :]
+    sequence = np.array(text_to_sequence(text_seq, hp.hparams.text_cleaners))[
+        None, :
+    ]
     print("sequence size", np.shape(sequence))
 
-    sequence = torch.autograd.Variable(
-        torch.from_numpy(sequence)).cuda().long()
+    sequence = (
+        torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
+    )
 
     mel, mel_postnet, _, alignment = tacotron2.inference(sequence)
 
     wav = audio.inv_mel_spectrogram(mel_postnet.float().data.cpu().numpy()[0])
     file_name = text_seq.replace(" ", "_")
 
-    audio.save_wav(wav, "%s.wav" %file_name)
+    audio.save_wav(wav, "%s.wav" % file_name)
 
     alignment = alignment.float().data.cpu().numpy()[0]
     print("alignment size", np.shape(alignment))
@@ -100,8 +106,12 @@ def get_one_alignment(text, tacotron2):
 
 
 def get_alignment(texts, tacotron2):
-    out = torch.stack([get_one_alignment(texts[i:i+1], tacotron2)
-                       for i in range(texts.size(0))])
+    out = torch.stack(
+        [
+            get_one_alignment(texts[i : i + 1], tacotron2)
+            for i in range(texts.size(0))
+        ]
+    )
 
     return out
 
@@ -113,39 +123,42 @@ def process_text(train_text_path):
         for line in f.readlines():
             cnt = 0
             for index, ele in enumerate(line):
-                if ele == '|':
+                if ele == "|":
                     cnt = cnt + 1
                     if cnt == 2:
                         inx = index
                         end = len(line)
-                        txt.append(line[inx+1:end-1])
+                        txt.append(line[inx + 1 : end - 1])
                         break
 
         return txt
- 
+
+
 if __name__ == "__main__":
     # Test
 
     tacotron2 = get_tacotron2()
 
-    text_path = os.path.join('dataset/nam', "train.txt")
+    text_path = os.path.join("dataset/nam", "train.txt")
     text = process_text(text_path)
-    
+
     i = 0
     for i in range(len(text)):
-        text_seq = np.array(text_to_sequence(text[i],['korean_cleaners']))[None, :]
+        text_seq = np.array(text_to_sequence(text[i], ["korean_cleaners"]))[
+            None, :
+        ]
         text_seq = torch.from_numpy(text_seq)
         alignment = get_one_alignment(text_seq, tacotron2)
-        file_name = "%d.npy" %i
+        file_name = "%d.npy" % i
         dir_path = "./alignment_targets_nam"
         file_path = os.path.join(dir_path, file_name)
         if not os.path.exists(dir_path):
             os.mkdir(dir_path)
 
         if not os.path.exists(file_path):
-            f = open(file_path, 'a+')
+            f = open(file_path, "a+")
             f.close()
         np.save(file_path, alignment)
 
         if i % 100 == 0:
-            print ("current step : %d\n" %i)
+            print("current step : %d\n" % i)

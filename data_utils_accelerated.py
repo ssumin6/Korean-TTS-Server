@@ -6,11 +6,11 @@ import os
 from text import text_to_sequence
 import hparams as hp
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class FastSpeechDataset(Dataset):
-    """ LJSpeech """
+    """LJSpeech"""
 
     def __init__(self, dataset_path=hp.dataset_path):
         self.dataset_path = dataset_path
@@ -23,7 +23,8 @@ class FastSpeechDataset(Dataset):
     def __getitem__(self, idx):
         index = idx + 1
         mel_name = os.path.join(
-            self.dataset_path, "ljspeech-mel-%05d.npy" % index)
+            self.dataset_path, "ljspeech-mel-%05d.npy" % index
+        )
         mel_np = np.load(mel_name)
 
         character = self.text[idx]
@@ -33,8 +34,9 @@ class FastSpeechDataset(Dataset):
         if not hp.pre_target:
             return {"text": character, "mel": mel_np}
         else:
-            alignment = np.load(os.path.join(
-                hp.alignment_target_path, str(idx)+".npy"))
+            alignment = np.load(
+                os.path.join(hp.alignment_target_path, str(idx) + ".npy")
+            )
 
             return {"text": character, "mel": mel_np, "alignment": alignment}
 
@@ -46,23 +48,22 @@ def process_text(train_text_path):
         for line in f.readlines():
             cnt = 0
             for index, ele in enumerate(line):
-                if ele == '|':
+                if ele == "|":
                     cnt = cnt + 1
                     if cnt == 2:
                         inx = index
                         end = len(line)
-                        txt.append(line[inx+1:end-1])
+                        txt.append(line[inx + 1 : end - 1])
                         break
 
         return txt
 
 
 def collate_fn(batch):
-    texts = [d['text'] for d in batch]
-    mels = [d['mel'] for d in batch]
+    texts = [d["text"] for d in batch]
+    mels = [d["mel"] for d in batch]
 
     if not hp.pre_target:
-
         texts, pos_padded = pad_text(texts)
         mels = pad_mel(mels)
 
@@ -74,17 +75,26 @@ def collate_fn(batch):
         alignment_target = pad_alignment(alignment_target)
         mels = pad_mel(mels)
 
-        return {"texts": texts, "pos": pos_padded, "mels": mels, "alignment": alignment_target}
+        return {
+            "texts": texts,
+            "pos": pos_padded,
+            "mels": mels,
+            "alignment": alignment_target,
+        }
 
 
 def pad_text(inputs):
-
     def pad_data(x, length):
         pad = 0
         x_padded = np.pad(
-            x, (0, length - x.shape[0]), mode='constant', constant_values=pad)
-        pos_padded = np.pad(np.array([(i+1) for i in range(np.shape(x)[0])]),
-                            (0, length - x.shape[0]), mode='constant', constant_values=pad)
+            x, (0, length - x.shape[0]), mode="constant", constant_values=pad
+        )
+        pos_padded = np.pad(
+            np.array([(i + 1) for i in range(np.shape(x)[0])]),
+            (0, length - x.shape[0]),
+            mode="constant",
+            constant_values=pad,
+        )
 
         return x_padded, pos_padded
 
@@ -97,11 +107,11 @@ def pad_text(inputs):
 
 
 def pad_alignment(alignment):
-
     def pad_data(x, length):
         pad = 0
         x_padded = np.pad(
-            x, (0, length - x.shape[0]), mode='constant', constant_values=pad)
+            x, (0, length - x.shape[0]), mode="constant", constant_values=pad
+        )
 
         return x_padded
 
@@ -113,14 +123,17 @@ def pad_alignment(alignment):
 
 
 def pad_mel(inputs):
-
     def pad(x, max_len):
         if np.shape(x)[0] > max_len:
             raise ValueError("not max_len")
 
         s = np.shape(x)[1]
-        x = np.pad(x, (0, max_len - np.shape(x)
-                       [0]), mode='constant', constant_values=0)
+        x = np.pad(
+            x,
+            (0, max_len - np.shape(x)[0]),
+            mode="constant",
+            constant_values=0,
+        )
 
         return x[:, :s]
 
@@ -130,7 +143,7 @@ def pad_mel(inputs):
     return mel_output
 
 
-class data_prefetcher():
+class data_prefetcher:
     def __init__(self, loader):
         self.loader = iter(loader)
         self.stream = torch.cuda.Stream()
@@ -161,21 +174,28 @@ class data_prefetcher():
             return
         with torch.cuda.stream(self.stream):
             if hp.pre_target:
-                self.next_texts = torch.from_numpy(
-                    self.next_texts).long().to(device)
-                self.next_pos = torch.from_numpy(
-                    self.next_pos).long().to(device)
-                self.next_mels = torch.from_numpy(
-                    self.next_mels).float().to(device)
-                self.next_alignment = torch.from_numpy(
-                    self.next_alignment).float().to(device)
+                self.next_texts = (
+                    torch.from_numpy(self.next_texts).long().to(device)
+                )
+                self.next_pos = (
+                    torch.from_numpy(self.next_pos).long().to(device)
+                )
+                self.next_mels = (
+                    torch.from_numpy(self.next_mels).float().to(device)
+                )
+                self.next_alignment = (
+                    torch.from_numpy(self.next_alignment).float().to(device)
+                )
             else:
-                self.next_texts = torch.from_numpy(
-                    self.next_texts).long().to(device)
-                self.next_pos = torch.from_numpy(
-                    self.next_pos).long().to(device)
-                self.next_mels = torch.from_numpy(
-                    self.next_mels).float().to(device)
+                self.next_texts = (
+                    torch.from_numpy(self.next_texts).long().to(device)
+                )
+                self.next_pos = (
+                    torch.from_numpy(self.next_pos).long().to(device)
+                )
+                self.next_mels = (
+                    torch.from_numpy(self.next_mels).float().to(device)
+                )
 
     def next(self):
         torch.cuda.current_stream().wait_stream(self.stream)

@@ -17,8 +17,8 @@ use_lws = False
 
 # Text
 import tensorflow as tf
-hparams = tf.contrib.training.HParams(
-        text_cleaners = ['korean_cleaners'])
+
+hparams = tf.contrib.training.HParams(text_cleaners=["korean_cleaners"])
 
 # Model
 word_vec_dim = 384
@@ -43,10 +43,10 @@ n_warm_up_step = 4000
 learning_rate = 1e-3
 batch_size = 128
 epochs = 1000
-#dataset_path = "dataset/nam"
+# dataset_path = "dataset/nam"
 dataset_path = "dataset/nam1"
 logger_path = "logger"
-#alignment_target_path = "./alignment_targets_nam"
+# alignment_target_path = "./alignment_targets_nam"
 alignment_target_path = "./alignments_0729/wavs"
 waveglow_path = "./model_waveglow"
 checkpoint_path = "./model_new"

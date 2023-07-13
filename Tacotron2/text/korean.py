@@ -1,4 +1,4 @@
-# Code based on 
+# Code based on
 
 import re
 import os
@@ -35,14 +35,18 @@ id_to_char = {i: c for i, c in enumerate(ALL_SYMBOLS)}
 
 quote_checker = """([`"'＂“‘])(.+?)([`"'＂”’])"""
 
+
 def is_lead(char):
     return char in JAMO_LEADS
+
 
 def is_vowel(char):
     return char in JAMO_VOWELS
 
+
 def is_tail(char):
     return char in JAMO_TAILS
+
 
 def get_mode(char):
     if is_lead(char):
@@ -54,6 +58,7 @@ def get_mode(char):
     else:
         return -1
 
+
 def _get_text_from_candidates(candidates):
     if len(candidates) == 0:
         return ""
@@ -61,7 +66,8 @@ def _get_text_from_candidates(candidates):
         return _jamo_char_to_hcj(candidates[0])
     else:
         return j2h(**dict(zip(["lead", "vowel", "tail"], candidates)))
-        
+
+
 def jamo_to_korean(text):
     text = h2j(text)
 
@@ -90,106 +96,117 @@ def jamo_to_korean(text):
         idx += 1
     return new_text
 
+
 num_to_kor = {
-        '0': '영',
-        '1': '일',
-        '2': '이',
-        '3': '삼',
-        '4': '사',
-        '5': '오',
-        '6': '육',
-        '7': '칠',
-        '8': '팔',
-        '9': '구',
+    '0': '영',
+    '1': '일',
+    '2': '이',
+    '3': '삼',
+    '4': '사',
+    '5': '오',
+    '6': '육',
+    '7': '칠',
+    '8': '팔',
+    '9': '구',
 }
 
 unit_to_kor1 = {
-        '%': '퍼센트',
-        'cm': '센치미터',
-        'mm': '밀리미터',
-        'km': '킬로미터',
-        'kg': '킬로그람',
+    '%': '퍼센트',
+    'cm': '센치미터',
+    'mm': '밀리미터',
+    'km': '킬로미터',
+    'kg': '킬로그람',
 }
 unit_to_kor2 = {
-        'm': '미터',
+    'm': '미터',
 }
 
 upper_to_kor = {
-        'A': '에이',
-        'B': '비',
-        'C': '씨',
-        'D': '디',
-        'E': '이',
-        'F': '에프',
-        'G': '지',
-        'H': '에이치',
-        'I': '아이',
-        'J': '제이',
-        'K': '케이',
-        'L': '엘',
-        'M': '엠',
-        'N': '엔',
-        'O': '오',
-        'P': '피',
-        'Q': '큐',
-        'R': '알',
-        'S': '에스',
-        'T': '티',
-        'U': '유',
-        'V': '브이',
-        'W': '더블유',
-        'X': '엑스',
-        'Y': '와이',
-        'Z': '지',
+    'A': '에이',
+    'B': '비',
+    'C': '씨',
+    'D': '디',
+    'E': '이',
+    'F': '에프',
+    'G': '지',
+    'H': '에이치',
+    'I': '아이',
+    'J': '제이',
+    'K': '케이',
+    'L': '엘',
+    'M': '엠',
+    'N': '엔',
+    'O': '오',
+    'P': '피',
+    'Q': '큐',
+    'R': '알',
+    'S': '에스',
+    'T': '티',
+    'U': '유',
+    'V': '브이',
+    'W': '더블유',
+    'X': '엑스',
+    'Y': '와이',
+    'Z': '지',
 }
+
 
 def compare_sentence_with_jamo(text1, text2):
     return h2j(text1) != h2j(text2)
 
+
 def load_symbols_1():
-    jamo    = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
-    hj      = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣㄱㄲㄳㄴㄵㄶㅇㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ!'(),-.:;? "
+    jamo = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
+    hj = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣㄱㄲㄳㄴㄵㄶㅇㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ!'(),-.:;? "
     assert len(jamo) == len(hj)
     j2hj = {j: h for j, h in zip(jamo, hj)}
     return j2hj
 
+
 def load_symbols_2():
-  jamo  = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
-  hcj   = "_~ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ!'(),-.:;? "
-  assert len(jamo) == len(hcj)
-  j2hcj = {j: h for j, h in zip(jamo, hcj)}
-  return j2hcj
+    jamo = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
+    hcj = "_~ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ!'(),-.:;? "
+    assert len(jamo) == len(hcj)
+    j2hcj = {j: h for j, h in zip(jamo, hcj)}
+    return j2hcj
+
 
 def load_symbols_3():
-  jamo  = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
-  sj  =  "_|~|ᄀ|ᄀᄀ|ᄂ|ᄃ|ᄃᄃ|ᄅ|ᄆ|ᄇ|ᄇᄇ|ᄉ|ᄉᄉ|ᄋ|ᄌ|ᄌᄌ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㄱ|ㄱㄱ|ㄱㅅ|ㄴ|ㄴㅈ|ㄴㅎ|ㄷ|ㄹ|ㄹㄱ|ㄹㅁ|ㄹㅂ|ㄹㅅ|ㄹㅌ|ㄹㅍ|ㄹㅎ|ㅁ|ㅂ|ㅂㅅ|ㅅ|ㅅㅅ|ㅇ|ㅈ|ㅊ|ㅋ|ㅌ|ㅍ|ㅎ|!|'|(|)|,|-|.|:|;|?| "
-  assert len(jamo) == len(sj.split("|"))
-  j2sj = {j: s for j, s in zip(jamo, sj.split("|"))}
-  return j2sj
+    jamo = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
+    sj = "_|~|ᄀ|ᄀᄀ|ᄂ|ᄃ|ᄃᄃ|ᄅ|ᄆ|ᄇ|ᄇᄇ|ᄉ|ᄉᄉ|ᄋ|ᄌ|ᄌᄌ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㄱ|ㄱㄱ|ㄱㅅ|ㄴ|ㄴㅈ|ㄴㅎ|ㄷ|ㄹ|ㄹㄱ|ㄹㅁ|ㄹㅂ|ㄹㅅ|ㄹㅌ|ㄹㅍ|ㄹㅎ|ㅁ|ㅂ|ㅂㅅ|ㅅ|ㅅㅅ|ㅇ|ㅈ|ㅊ|ㅋ|ㅌ|ㅍ|ㅎ|!|'|(|)|,|-|.|:|;|?| "
+    assert len(jamo) == len(sj.split("|"))
+    j2sj = {j: s for j, s in zip(jamo, sj.split("|"))}
+    return j2sj
+
 
 def load_symbols_4():
-  jamo  = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
-  shcj  = "_|~|ㄱ|ㄱㄱ|ㄴ|ㄷ|ㄷㄷ|ㄹ|ㅁ|ㅂ|ㅂㅂ|ㅅ|ㅅㅅ|ㅇ|ㅈ|ㅈㅈ|ㅊ|ㅋ|ㅌ|ㅍ|ㅎ|ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㄱ|ㄱㄱ|ㄱㅅ|ㄴ|ㄴㅈ|ㄴㅎ|ㄷ|ㄹ|ㄹㄱ|ㄹㅁ|ㄹㅂ|ㄹㅅ|ㄹㅌ|ㄹㅍ|ㄹㅎ|ㅁ|ㅂ|ㅂㅅ|ㅅ|ㅅㅅ|ㅇ|ㅈ|ㅊ|ㅋ|ㅌ|ㅍ|ㅎ|!|'|(|)|,|-|.|:|;|?| "
-  assert len(jamo) == len(shcj.split("|"))
-  j2shcj = {j: s for j, s in zip(jamo, shcj.split("|"))}
-  return j2shcj
+    jamo = "_~ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑ하ᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆨᆩᆪᆫᆬᆭᆮᆯᆰᆱᆲᆳᆴᆵᆶᆷᆸᆹᆺᆻᆼᆽᆾᆿᇀᇁᇂ!'(),-.:;? "
+    shcj = "_|~|ㄱ|ㄱㄱ|ㄴ|ㄷ|ㄷㄷ|ㄹ|ㅁ|ㅂ|ㅂㅂ|ㅅ|ㅅㅅ|ㅇ|ㅈ|ㅈㅈ|ㅊ|ㅋ|ㅌ|ㅍ|ㅎ|ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㄱ|ㄱㄱ|ㄱㅅ|ㄴ|ㄴㅈ|ㄴㅎ|ㄷ|ㄹ|ㄹㄱ|ㄹㅁ|ㄹㅂ|ㄹㅅ|ㄹㅌ|ㄹㅍ|ㄹㅎ|ㅁ|ㅂ|ㅂㅅ|ㅅ|ㅅㅅ|ㅇ|ㅈ|ㅊ|ㅋ|ㅌ|ㅍ|ㅎ|!|'|(|)|,|-|.|:|;|?| "
+    assert len(jamo) == len(shcj.split("|"))
+    j2shcj = {j: s for j, s in zip(jamo, shcj.split("|"))}
+    return j2shcj
+
 
 def tokenize(text, as_id=False, symbol_type=1, debug=False):
 
-    j2hj, j2hcj, j2sj, j2shcj = load_symbols_1(), load_symbols_2(), load_symbols_3(), load_symbols_4()
+    j2hj, j2hcj, j2sj, j2shcj = load_symbols_1(), load_symbols_2(
+    ), load_symbols_3(), load_symbols_4()
 
     text = normalize(text)
     pre_tokens = list(hangul_to_jamo(text))
-    pre_tokens = [hcj_to_jamo(_, "lead") if is_hcj(_) else _ for _ in pre_tokens]
+    pre_tokens = [
+        hcj_to_jamo(_, "lead") if is_hcj(_) else _ for _ in pre_tokens
+    ]
     tokens = []
     if symbol_type == 1:
         if debug:
             print(char_to_id_1)
         for token in pre_tokens:
             tokens += list(j2hj[token])
-            
+
         if as_id:
-            return [char_to_id_1[token] for token in tokens] + [char_to_id_1[EOS]]
+            return [char_to_id_1[token]
+                    for token in tokens] + [char_to_id_1[EOS]]
         else:
             return [token for token in tokens] + [EOS]
 
@@ -200,7 +217,8 @@ def tokenize(text, as_id=False, symbol_type=1, debug=False):
             tokens += list(j2hcj[token])
 
         if as_id:
-            return [char_to_id_2[token] for token in tokens] + [char_to_id_2[EOS]]
+            return [char_to_id_2[token]
+                    for token in tokens] + [char_to_id_2[EOS]]
         else:
             return [token for token in tokens] + [EOS]
 
@@ -211,7 +229,8 @@ def tokenize(text, as_id=False, symbol_type=1, debug=False):
             tokens += list(j2sj[token])
 
         if as_id:
-            return [char_to_id_3[token] for token in tokens] + [char_to_id_3[EOS]]
+            return [char_to_id_3[token]
+                    for token in tokens] + [char_to_id_3[EOS]]
         else:
             return [token for token in tokens] + [EOS]
 
@@ -222,12 +241,16 @@ def tokenize(text, as_id=False, symbol_type=1, debug=False):
             tokens += list(j2shcj[token])
 
         if as_id:
-            return [char_to_id_4[token] for token in tokens] + [char_to_id_4[EOS]]
+            return [char_to_id_4[token]
+                    for token in tokens] + [char_to_id_4[EOS]]
         else:
             return [token for token in tokens] + [EOS]
 
+
 def tokenizer_fn(iterator, symbol_type):
-    return (token for x in iterator for token in tokenize(x, as_id=False, symbol_type=symbol_type))
+    return (token for x in iterator
+            for token in tokenize(x, as_id=False, symbol_type=symbol_type))
+
 
 def normalize(text):
     text = text.strip()
@@ -247,6 +270,7 @@ def normalize(text):
 
     return text
 
+
 def normalize_with_dictionary(text, dic):
     if any(key in text for key in dic.keys()):
         pattern = re.compile('|'.join(re.escape(key) for key in dic.keys()))
@@ -254,7 +278,9 @@ def normalize_with_dictionary(text, dic):
     else:
         return text
 
+
 def normalize_english(text):
+
     def fn(m):
         word = m.group()
         if word in english_dictionary:
@@ -265,6 +291,7 @@ def normalize_english(text):
     text = re.sub("([A-Za-z]+)", fn, text)
     return text
 
+
 def normalize_upper(text):
     text = text.group(0)
 
@@ -273,9 +300,11 @@ def normalize_upper(text):
     else:
         return text
 
+
 def normalize_quote(text):
+
     def fn(found_text):
-        from nltk import sent_tokenize # NLTK doesn't along with multiprocessing
+        from nltk import sent_tokenize  # NLTK doesn't along with multiprocessing
 
         found_text = found_text.group()
         unquoted_text = found_text[1:-1]
@@ -285,37 +314,38 @@ def normalize_quote(text):
 
     return re.sub(quote_checker, fn, text)
 
+
 number_checker = "([+-]?\d[\d,]*)[\.]?\d*"
 count_checker = "(시|명|가지|살|마리|포기|송이|수|톨|통|점|개|벌|척|채|다발|그루|자루|줄|켤레|그릇|잔|마디|상자|사람|곡|병|판)"
+
 
 def normalize_number(text):
     text = normalize_with_dictionary(text, unit_to_kor1)
     text = normalize_with_dictionary(text, unit_to_kor2)
     text = re.sub(number_checker + count_checker,
-            lambda x: number_to_korean(x, True), text)
-    text = re.sub(number_checker,
-            lambda x: number_to_korean(x, False), text)
+                  lambda x: number_to_korean(x, True), text)
+    text = re.sub(number_checker, lambda x: number_to_korean(x, False), text)
     return text
+
 
 num_to_kor1 = [""] + list("일이삼사오육칠팔구")
 num_to_kor2 = [""] + list("만억조경해")
 num_to_kor3 = [""] + list("십백천")
 
 #count_to_kor1 = [""] + ["하나","둘","셋","넷","다섯","여섯","일곱","여덟","아홉"]
-count_to_kor1 = [""] + ["한","두","세","네","다섯","여섯","일곱","여덟","아홉"]
+count_to_kor1 = [""] + ["한", "두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉"]
 
 count_tenth_dict = {
-        "십": "열",
-        "두십": "스물",
-        "세십": "서른",
-        "네십": "마흔",
-        "다섯십": "쉰",
-        "여섯십": "예순",
-        "일곱십": "일흔",
-        "여덟십": "여든",
-        "아홉십": "아흔",
+    "십": "열",
+    "두십": "스물",
+    "세십": "서른",
+    "네십": "마흔",
+    "다섯십": "쉰",
+    "여섯십": "예순",
+    "일곱십": "일흔",
+    "여덟십": "여든",
+    "아홉십": "아흔",
 }
-
 
 
 def number_to_korean(num_str, is_count=False):
@@ -323,7 +353,7 @@ def number_to_korean(num_str, is_count=False):
         num_str, unit_str = num_str.group(1), num_str.group(2)
     else:
         num_str, unit_str = num_str.group(), ""
-    
+
     num_str = num_str.replace(',', '')
     try:
         num = ast.literal_eval(num_str)
@@ -342,7 +372,8 @@ def number_to_korean(num_str, is_count=False):
         digit_str, float_str = check_float[0], None
 
     if is_count and float_str is not None:
-        raise Exception(" [!] `is_count` and float number does not fit each other")
+        raise Exception(
+            " [!] `is_count` and float number does not fit each other")
 
     digit = int(digit_str)
 
@@ -374,9 +405,8 @@ def number_to_korean(num_str, is_count=False):
             kor = kor[1:]
 
         if any(word in kor for word in count_tenth_dict):
-            kor = re.sub(
-                    '|'.join(count_tenth_dict.keys()),
-                    lambda x: count_tenth_dict[x.group()], kor)
+            kor = re.sub('|'.join(count_tenth_dict.keys()),
+                         lambda x: count_tenth_dict[x.group()], kor)
 
     if not is_count and kor.startswith("일") and len(kor) > 1:
         kor = kor[1:]
@@ -392,11 +422,13 @@ def number_to_korean(num_str, is_count=False):
 
     return kor + unit_str
 
+
 if __name__ == "__main__":
+
     def test_normalize(text):
         print(text)
         print(normalize(text))
-        print("="*30)
+        print("=" * 30)
 
     test_normalize("JTBC는 JTBCs를 DY는 A가 Absolute")
     test_normalize("오늘(13일) 101마리 강아지가")
