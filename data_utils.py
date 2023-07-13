@@ -137,7 +137,6 @@ def pad_mel(inputs):
         if np.shape(x)[0] > max_len:
             raise ValueError("not max_len")
 
-        ###add this code for new mel production
         x = torch.FloatTensor(x.astype(np.float32))
         x = torch.squeeze(x)
         x = x.numpy()
@@ -153,9 +152,6 @@ def pad_mel(inputs):
         return x[:, :s]
 
     max_len = max(np.shape(x)[0] for x in inputs)
-    # print('max_len shape',  max_len)
-    # for x in inputs:
-    #    print('input', np.shape)
     mel_output = np.stack([pad(x, max_len) for x in inputs])
 
     return mel_output

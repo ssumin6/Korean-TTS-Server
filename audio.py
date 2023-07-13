@@ -38,8 +38,7 @@ def inv_spectrogram(spectrogram):
     """Converts spectrogram to waveform using librosa"""
     S = _db_to_amp(
         _denormalize(spectrogram) + hparams.ref_level_db
-    )  # Convert back to linear
-    # Reconstruct phase
+    ) 
     return inv_preemphasis(_griffin_lim(S**hparams.power))
 
 
@@ -47,20 +46,8 @@ def melspectrogram(y, stft):
     y = torch.FloatTensor(y.astype(np.float32))
     y = y.unsqueeze(0)
     D = torch.autograd.Variable(y, requires_grad=False)
-    #####################################################################
-    # D = preemphasis(y)
-    # print('preemphasis', D.max(), D.mean(), D.min())
+   
     S = _stft2(D, stft)
-    # D = _stft(D)
-    # print(D.shape)
-    # print('stft', D.max(), D.mean(), D.min())
-    # S = _linear_to_mel(np.abs(D))
-    # print('linear_to_mel', S.max(), S.mean(), S.min())
-    # S = _amp_to_db(S) - hparams.ref_level_db
-    # print('_amp_to_db', S.max(), S.mean(), S.min())
-    # S = _normalize(S)
-    # print('normalize', S.max(), S.mean(), S.min())
-
     return S
 
 
@@ -101,16 +88,8 @@ def taco_stft():
 
 
 def _stft2(y, stft):
-    # n_fft, hop_length, win_length = _stft_parameters()
-    ##################################################################################
-    # stft = TacotronSTFT(n_fft, hop_length, win_length)
     melspec = stft.mel_spectrogram(y)
     return melspec
-    ##################################################################################
-
-
-# return librosa.stft(y=y, n_fft=n_fft, hop_length=hop_length, win_length=win_length)
-
 
 def _istft(y):
     _, hop_length, win_length = _stft_parameters()
@@ -121,13 +100,9 @@ def _stft_parameters():
     n_fft = (hparams.num_freq - 1) * 2
     hop_length = int(hparams.frame_shift_ms / 1000 * hparams.sample_rate)
     win_length = int(hparams.frame_length_ms / 1000 * hparams.sample_rate)
-    # hop_length = 256
-    # win_length = 1024
 
     return n_fft, hop_length, win_length
 
-
-# Conversions:
 _mel_basis = None
 
 
@@ -201,12 +176,7 @@ def inv_mel_spectrogram(mel_spectrogram):
     else:
         D = mel_spectrogram
 
-    # print('denormalize',D.max(), D.mean(),D.min())
-
     # Convert back to linear
     S = _db_to_amp(D + hparams.ref_level_db)
-    # print('_db_to_amp', S.max(), S.mean(), S.min())
     S = _mel_to_linear(S)
-    # print('mel_to_linear', S.max(), S.mean(), S.min())
-    # return inv_preemphasis(_griffin_lim(S ** hparams.power))
     return _griffin_lim(S**hparams.power)

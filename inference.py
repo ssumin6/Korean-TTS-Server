@@ -12,7 +12,6 @@ import torch
 import hparams as hp
 from audio_processing import griffin_lim, mel_denormalize
 
-# from train import load_model
 from text.text import text_to_sequence
 from scipy.io.wavfile import write
 import audio
@@ -33,11 +32,7 @@ def generate_mels(
     model.eval()
 
     output_mels = []
-    # for i, s in enumerate(text):
-    # sequence = np.array(text_to_sequence(s, cleaner))[None, :]
-    # sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
 
-    # stime = time.time()
     with torch.no_grad():
         _, mel_outputs_postnet = model(text, pos, alpha=1.0)
     for i, mel in enumerate(mel_outputs_postnet):
@@ -49,24 +44,16 @@ def generate_mels(
         )
     return mel_outputs_postnet
 
-    # output_mels.append(mel)
-
-
-# return output_mels
-
 
 def mels_to_wavs_GL(mels, taco_stft, ref_level_db=0, magnitude_power=1.5):
-    # print('inside mels_wavs', len(mels))
     for i, mel in enumerate(mels):
         stime = time.time()
         mel_decompress = mel_denormalize(
             torch.from_numpy(mel).cuda().unsqueeze(0), hp.max_abs_value
         )
-        # print(mel_decompress.shape)
         mel_decompress = taco_stft.spectral_de_normalize(
             mel_decompress + ref_level_db
         ) ** (1 / magnitude_power)
-        # print(mel_decompress.shape)
         mel_decompress_ = mel_decompress.transpose(1, 2).data.cpu()
         spec_from_mel_scaling = 1000
         spec_from_mel = torch.mm(mel_decompress_[0], taco_stft.mel_basis)
@@ -84,7 +71,6 @@ def mels_to_wavs_GL(mels, taco_stft, ref_level_db=0, magnitude_power=1.5):
             i, len_audio, dec_time
         )
         print(str)
-        # write(os.path.join(output_dir,"sentence_{}.wav".format(i)), hp.sample_rate, waveform)
 
     return waveform
 

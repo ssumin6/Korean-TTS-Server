@@ -32,7 +32,6 @@ def preprocess_audio(file_list, silence_audio_size, prefix=""):
             data_ = np.append(data_, [0.0] * silence_audio_size)
             data_ = data_.astype(dtype=np.int16)
             write(wav_file, sr, data_)
-            # print(len(data),len(data_))
             if i % 100 == 0:
                 print(i)
 

@@ -34,29 +34,22 @@ class TacotronSTFT(torch.nn.Module):
 
     def transform2(self, y):
         result = torch.stft(y, n_fft=1024, hop_length=256, win_length=1024)
-        print(result.shape)
         real = result[:, :, :, 0]
         imag = result[:, :, :, 1]
         magnitude = torch.sqrt(real**2 + imag**2)
         phase = torch.autograd.Variable(torch.atan2(imag.data, real.data))
-        print(phase.shape, phase.min(), phase.max())
-        print(magnitude.shape, magnitude.min(), magnitude.max())
         return magnitude, phase
 
     def cepstrum_from_mel(self, mel, ref_level_db=20, magnitude_power=1.5):
         assert torch.min(mel.data) >= -self.max_abs_mel_value
         assert torch.max(mel.data) <= self.max_abs_mel_value
-        # print('mel: ', mel.max(), mel.min())
+
         spec = mel_denormalize(mel, self.max_abs_mel_value)
-        # print('spec: ', spec.max(), spec.min())
         magnitudes = self.spectral_de_normalize(spec + ref_level_db) ** (
             1 / magnitude_power
         )
-        # print('Magnitude: ', Magnitude.max(), Magnitude.min())
-        pow_spec = (magnitudes**2) / 1024  # if filter_length = 1024
-        # print('pow_spec: ', pow_spec.max(), pow_spec.min())
-        db_pow_spec = torch.log(torch.clamp(pow_spec, min=1e-5)) * 20  # db
-        # print('db_pow_spec: ', db_pow_spec.max(), db_pow_spec.min())
+        pow_spec = (magnitudes**2) / 1024 
+        db_pow_spec = torch.log(torch.clamp(pow_spec, min=1e-5)) * 20  
         mcc = dct(db_pow_spec, "ortho")
         return mcc
 
@@ -64,17 +57,14 @@ class TacotronSTFT(torch.nn.Module):
         assert torch.min(y.data) >= -1
         assert torch.max(y.data) <= 1
         magnitudes, phases = self.stft_fn.transform(y)
-        # print('magnitudes: ', magnitudes.max(), magnitudes.min())
         pow_spec = (1 / 1024) * magnitudes**2
-        # print('pow_spec: ', pow_spec.max(), pow_spec.min())
         mel_spectrogram = (
             torch.matmul(self.mel_basis, pow_spec).squeeze(0).transpose(0, 1)
         )
-        # print('mel_spectrogram: ', mel_spectrogram.max(), mel_spectrogram.min())
+        
         db_mel_spectrogram = (
             torch.log10(torch.clamp(pow_spec, min=1e-5)) * 20
-        )  # db
-        # print('db_mel_spectrogram: ', db_mel_spectrogram.max(), db_mel_spectrogram.min())
+        )
         mcc = dct(db_mel_spectrogram, "ortho")
         return mcc
 
@@ -91,20 +81,12 @@ class TacotronSTFT(torch.nn.Module):
         assert torch.min(y.data) >= -1
         assert torch.max(y.data) <= 1
 
-        # print('y' ,y.max(), y.mean(), y.min())
         magnitudes, phases = self.stft_fn.transform(y)
         magnitudes = magnitudes.data
-        # print('stft_fn', magnitudes.max(), magnitudes.mean(), magnitudes.min())
+
         mel_output = torch.matmul(
             self.mel_basis, torch.abs(magnitudes) ** magnitude_power
         )
-        # print('_linear_to_mel', mel_output.max(), mel_output.mean(), mel_output.min())
         mel_output = self.spectral_normalize(mel_output) - ref_level_db
-        # print('_amp_to_db', mel_output.max(), mel_output.mean(), mel_output.min())
         mel_output = mel_normalize(mel_output, self.max_abs_mel_value)
-        # print('_normalize', mel_output.max(), mel_output.mean(), mel_output.min())
-        # spec = mel_denormalize(mel_output)
-        # print('_denormalize', spec.max(), spec.mean(), spec.min())
-        # spec = self.spectral_de_normalize(spec + ref_level_db)**(1/magnitude_power)
-        # print('db_to_amp', spec.max(), spec.mean(), spec.min())
         return mel_output
